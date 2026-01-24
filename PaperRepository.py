@@ -72,9 +72,9 @@ class PaperRepository:
             if i % 10 == 0:
                 self.db.con.commit()
 
-    def get_newest_related_papers(self, text: str, timedelta: timedelta, filter_list: list[str] | None = None, limit: int = 10):
+    def get_newest_related_papers(self, text: str, filter_list: list[str] | None = None, start_date: str = None, end_date: str = None, limit: int = 10):
         embedding = self.embedding_model.model.embed_query(text)
-        paper_rows = self.db.get_newest_papers(embedding, timedelta, filter_list or [], limit)
+        paper_rows = self.db.get_newest_papers(embedding, filter_list or [], start_date, end_date, limit)
         papers: list[Paper] = []
         for paper_row in paper_rows:
             paper, similarity = Paper.from_database_row(paper_row)

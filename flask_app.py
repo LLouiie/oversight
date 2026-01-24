@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 import os
 from typing import Dict, List
 
@@ -92,10 +92,16 @@ def search() -> tuple[dict, int]:
         return {"error": "text is required"}, 400
 
     time_window_days = body.get("time_window_days")
-    try:
-        time_window_days_int = int(time_window_days) if time_window_days is not None else 365 * 5
-    except Exception:
-        return {"error": "time_window_days must be an integer"}, 400
+    start_date = body.get("start_date")
+    end_date = body.get("end_date")
+
+    # Backwards compatibility for time_window_days
+    if not start_date and time_window_days is not None:
+        try:
+            days = int(time_window_days)
+            start_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+        except ValueError:
+            return {"error": "time_window_days must be an integer"}, 400
 
     limit = body.get("limit")
     try:
@@ -110,9 +116,10 @@ def search() -> tuple[dict, int]:
     with PaperRepository(embedding_model_name="models/gemini-embedding-001") as repo:
         filters = _build_filters(repo, sources_flags)
         papers = repo.get_newest_related_papers(
-            query_text,
-            timedelta(days=time_window_days_int),
-            filters,
+            text=query_text,
+            filter_list=filters,
+            start_date=start_date,
+            end_date=end_date,
             limit=limit_int,
         )
 

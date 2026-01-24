@@ -249,11 +249,13 @@ class PaperDatabase:
                 LIMIT %s::INTEGER
             """, [embedding, oldest_time, limit]).fetchall()
 
-    def get_newest_papers(self, embedding: list[float], timedelta: timedelta, filter_list: list[str], limit: int = 10):
-        if timedelta is None:
-            timedelta = timedelta(days=365*50)
-
-        oldest_time = (datetime.now() - timedelta).strftime("%Y-%m-%d")
+    def get_newest_papers(self, embedding: list[float], filter_list: list[str], start_date: str = None, end_date: str = None, limit: int = 10):
+        if start_date is None:
+            # Default to ~50 years ago
+            start_date = (datetime.now() - timedelta(days=365*50)).strftime("%Y-%m-%d")
+        
+        if end_date is None:
+            end_date = datetime.now().strftime("%Y-%m-%d")
 
         # Combine multiple filters with OR (union of sources), wrapped to preserve precedence
         filter_str = ""
@@ -267,12 +269,13 @@ class PaperDatabase:
                 FROM paper AS ps
                 JOIN embedding AS emb
                   ON emb.paper_id = ps.paper_id
-                WHERE ps.update_date > %s::DATE
+                WHERE ps.update_date >= %s::DATE
+                  AND ps.update_date <= %s::DATE
                   AND emb.embedding_gemini_embedding_001 IS NOT NULL
                 {filter_str}
                 ORDER BY similarity ASC
                 LIMIT %s::INTEGER
-            """, [embedding, oldest_time, limit]).fetchall()
+            """, [embedding, start_date, end_date, limit]).fetchall()
     
     # TODO: Add a way of finding the next conference date for each source
     def summarise_current_conferences(self):

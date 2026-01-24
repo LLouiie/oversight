@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
+import { DateRangePicker } from "../components/DateRangePicker";
 
 type Paper = {
   paper_id: string;
@@ -9,12 +10,33 @@ type Paper = {
   link?: string | null;
   paper_date?: string | null;
   citation_count?: number;
+  authors?: string;
 };
 
 function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (abstract: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const abstractRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggle, setCanToggle] = useState(false);
+
+  // Extract affiliation from authors string
+  // Supports formats: "Name (Affiliation)" or "Name, Affiliation"
+  const affiliation = useMemo(() => {
+    if (!p.authors) return null;
+    
+    // Try extracting from parentheses first
+    const parenMatch = p.authors.match(/\(([^)]+)\)/);
+    if (parenMatch) return parenMatch[1];
+
+    // Fallback: assume "Name, Affiliation" format
+    // Take first author group (separated by ;)
+    const firstAuthorGroup = p.authors.split(';')[0];
+    const parts = firstAuthorGroup.split(',');
+    if (parts.length > 1) {
+      return parts[parts.length - 1].trim();
+    }
+    
+    return null;
+  }, [p.authors]);
 
   useEffect(() => {
     if (expanded) return;
@@ -42,6 +64,14 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
             <div className="flex flex-wrap items-center gap-3 text-xs text-base-content/70 mb-3">
                <span className="badge badge-sm badge-outline font-medium">{p.source || 'Unknown'}</span>
                {p.paper_date && <span>{new Date(p.paper_date).toLocaleDateString()}</span>}
+               {affiliation && (
+                 <span className="flex items-center gap-1 max-w-[200px] truncate" title={affiliation}>
+                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                     <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.544l.062.029.006.003.002.001.001.001zm-1.602-5.74l-.457-.142a1 1 0 01-.65-1.157l.18-1.256-.474-.438a1 1 0 01.378-1.658l1.096-.34 1.493-2.618a1 1 0 011.758 0l1.493 2.618 1.096.34a1 1 0 01.378 1.658l-.475.438.181 1.256a1 1 0 01-.65 1.157l-.458.142a2.5 2.5 0 00-1.638 1.638l-.142.457a1 1 0 01-1.916 0l-.142-.457a2.5 2.5 0 00-1.638-1.638z" clipRule="evenodd" />
+                   </svg>
+                   {affiliation}
+                 </span>
+               )}
                {p.citation_count !== undefined && (
                  <span className="citation-tooltip-wrapper">
                    <span className="flex items-center gap-1">
@@ -104,10 +134,30 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
 
 export default function HomePage() {
   const [text, setText] = useState("");
-  // Time Window: default to 5 years (approx 1825 days)
-  const [timeDays, setTimeDays] = useState<number>(365 * 5);
+  
+  // Lookback Window State
+  const [lookbackOption, setLookbackOption] = useState<'any' | 'pastYear' | 'pastMonth' | 'pastWeek' | 'custom'>('any');
+  
+  // Default to last year -> today
+  const [customStartDate, setCustomStartDate] = useState<string>(() => {
+      const d = new Date();
+      d.setFullYear(d.getFullYear() - 1);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+  });
+  const [customEndDate, setCustomEndDate] = useState<string>(() => {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+  });
 
-  const [limit, setLimit] = useState<number>(10);
+  const [showCustomRange, setShowCustomRange] = useState(false);
+
+  const [limit, setLimit] = useState<number | 'all' | ''>('all');
   const [sources, setSources] = useState({
     arxiv: true,
     // AI conferences
@@ -131,6 +181,10 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState<"relevance" | "date" | "citation">("relevance");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -138,21 +192,24 @@ export default function HomePage() {
     }
   }, [theme]);
 
+  // Reset pagination when search changes
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [text, lookbackOption, limit, sortBy, sortDirection]);
+
+  // Trigger search when time range or sources changes
+  useEffect(() => {
+    if (text.trim()) {
+      onSubmit({ preventDefault: () => {} } as React.FormEvent);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lookbackOption, customStartDate, customEndDate, sources]);
+
   // Conference categories
   const aiConferences = ['ICML', 'NeurIPS', 'ICLR'];
   const systemsConferences = ['OSDI', 'SOSP', 'ASPLOS', 'ATC', 'NSDI', 'MLSys', 'EuroSys', 'VLDB'];
 
-  const timeLabel = useMemo(() => {
-    if (timeDays >= 365) {
-      const years = Math.round(timeDays / 365);
-      return `${years} year${years === 1 ? "" : "s"}`;
-    }
-    if (timeDays >= 30) {
-      const months = Math.round(timeDays / 30);
-      return `${months} month${months === 1 ? "" : "s"}`;
-    }
-    return `${timeDays} day${timeDays === 1 ? "" : "s"}`;
-  }, [timeDays]);
+  // Remove timeLabel useMemo as it's no longer needed
 
   const sortedResults = useMemo(() => {
     let res = [...results];
@@ -214,10 +271,11 @@ export default function HomePage() {
     setTimeout(() => {
       if (lastRequestIdRef.current !== reqId) return;
       
-      setResults([
+      const baseResults: Paper[] = [
         {
           paper_id: "1",
           title: "Optimizing LLM Inference with Speculative Decoding",
+          authors: "Charlie Chen, CMU; Yang Li, Google",
           abstract: "This paper presents a novel approach to speed up LLM inference by leveraging a smaller draft model to generate candidate tokens, which are then verified by the larger target model in parallel. We show that this method can achieve 2-3x speedups on standard benchmarks without compromising generation quality.",
           source: "ICML",
           paper_date: "2023-07-01",
@@ -227,6 +285,7 @@ export default function HomePage() {
         {
           paper_id: "2",
           title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+          authors: "Tri Dao, Stanford University; Daniel Y. Fu, Stanford University",
           abstract: "We introduce FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory accesses between GPU HBM and on-chip SRAM. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seqlen 512), 3x speedup on GPT-2 (seqlen 1K), and 2.4x speedup on long-range arena (seqlen 1K-4K).",
           source: "NeurIPS",
           paper_date: "2022-12-01",
@@ -236,6 +295,7 @@ export default function HomePage() {
         {
           paper_id: "3",
           title: "Older Paper Example for Sorting Test",
+          authors: "Jane Doe, MIT",
           abstract: "An older paper to test if date sorting works correctly. This paper discusses fundamental concepts in distributed systems consensus algorithms.",
           source: "OSDI",
           paper_date: "2020-10-15",
@@ -245,6 +305,7 @@ export default function HomePage() {
         {
           paper_id: "4",
           title: "Recent Advances in Graph Neural Networks",
+          authors: "John Smith, DeepMind",
           abstract: "A comprehensive survey of Graph Neural Networks (GNNs) covering various architectures including Graph Convolutional Networks (GCNs), Graph Attention Networks (GATs), and their applications in social network analysis, drug discovery, and recommendation systems.",
           source: "ICLR",
           paper_date: "2024-01-10",
@@ -254,13 +315,64 @@ export default function HomePage() {
         {
           paper_id: "5",
           title: "Large Language Models in Healthcare: A Comprehensive Review",
+          authors: "Sarah Johnson, Harvard Medical School",
           abstract: "The integration of Large Language Models (LLMs) into healthcare systems presents both transformative opportunities and significant challenges. This review explores the current state of LLM applications in medical diagnosis, patient record analysis, and drug discovery. We analyze the performance of various models including GPT-4, Med-PaLM, and others across a range of medical benchmarks. Furthermore, we discuss critical ethical considerations such as data privacy, bias in model outputs, and the necessity for human-in-the-loop verification systems. The paper also proposes a new framework for evaluating the clinical safety of LLMs before deployment. Our findings suggest that while LLMs demonstrate remarkable potential in assisting healthcare professionals, substantial work remains in ensuring their reliability and explainability in critical medical contexts. We conclude with a roadmap for future research directions in medical AI.",
           source: "Nature Medicine",
           paper_date: "2024-02-15",
           link: "#",
           citation_count: 45
         },
-      ]);
+      ];
+
+      // Filter baseResults based on lookbackOption and sources
+      const filteredResults = baseResults.filter(p => {
+        // Source filtering
+        if (p.source && (p.source in sources)) {
+            if (!sources[p.source as keyof typeof sources]) return false;
+        }
+
+        if (!p.paper_date) return true;
+        const pDate = new Date(p.paper_date);
+        const year = pDate.getFullYear();
+        
+        if (lookbackOption === 'any') return true;
+        
+        if (lookbackOption === 'custom') {
+            // Compare dates
+            const start = new Date(customStartDate);
+            const end = new Date(customEndDate);
+            // Reset hours to ensure inclusive comparison
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+            return pDate >= start && pDate <= end;
+        }
+
+        const now = new Date();
+        const cutoffDate = new Date(now);
+        
+        if (lookbackOption === 'pastYear') {
+            cutoffDate.setFullYear(now.getFullYear() - 1);
+        } else if (lookbackOption === 'pastMonth') {
+            cutoffDate.setMonth(now.getMonth() - 1);
+        } else if (lookbackOption === 'pastWeek') {
+            cutoffDate.setDate(now.getDate() - 7);
+        }
+        
+        cutoffDate.setHours(0,0,0,0);
+        return pDate >= cutoffDate;
+      });
+
+      // Duplicate mock data to simulate a full page of results
+      const extendedResults = Array.from({ length: 20 }).flatMap((_, i) => 
+        filteredResults.map(p => ({
+          ...p,
+          paper_id: `${p.paper_id}-${i}`,
+          // Only append suffix for duplicates to keep the first set clean
+          title: i === 0 ? p.title : `${p.title} [Copy ${i}]` 
+        }))
+      );
+      
+      setResults(extendedResults);
       setLoading(false);
     }, 600);
   }
@@ -280,9 +392,9 @@ export default function HomePage() {
         <meta name="description" content="Embeddings-backed academic paper search" />
       </Head>
 
-      <div className="grid h-screen grid-rows-[auto,1fr]">
+      <div className="flex flex-col min-h-screen">
         {/* Header */}
-        <header className="border-b border-base-300 bg-base-200/50 backdrop-blur">
+        <header className="border-b border-base-300 bg-base-200/50 backdrop-blur sticky top-0 z-50">
           <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-6 py-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-content font-bold">
@@ -294,7 +406,7 @@ export default function HomePage() {
             <button 
               className="btn btn-sm btn-ghost btn-circle"
               onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-              title={theme === 'dark' ? "切换到浅色模式" : "切换到深色模式"}
+              title={theme === 'dark' ? "Switch to the Light mode" : "Switch to the Dark mode"}
             >
               {theme === 'dark' ? (
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -310,71 +422,70 @@ export default function HomePage() {
         </header>
 
         {/* Main Layout */}
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-6 py-6 md:grid-cols-[300px,1fr]">
+        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-6 pt-6 md:grid-cols-[300px,1fr]">
           
           {/* Sidebar */}
-          <aside className="flex flex-col gap-6 overflow-y-auto pr-2">
+          <aside className="flex flex-col gap-6 pr-2">
             
             {/* Filters */}
             <div className="rounded-xl bg-base-200 p-4 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Filters</h3>
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">Time Range</h3>
               
-              <div className="form-control mb-6">
-                <label className="label">
-                  <span className="label-text">Lookback window</span>
-                  <span className="label-text-alt text-primary font-medium">{timeLabel}</span>
-                </label>
-                <input
-                  type="range"
-                  min={7}
-                  max={3650}
-                  step={1}
-                  value={timeDays}
-                  onChange={(e) => setTimeDays(parseInt((e.target as HTMLInputElement).value, 10))}
-                  className="range range-primary"
-                />
-                <div className="flex justify-between px-2 text-xs opacity-60 mt-1 font-mono">
-                  <span>1w</span>
-                  <span>1m</span>
-                  <span>1y</span>
-                  <span>10y</span>
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                      { id: 'any', label: 'Any time' },
+                      { id: 'pastYear', label: 'Past year' },
+                      { id: 'pastMonth', label: 'Past month' },
+                      { id: 'pastWeek', label: 'Past 7 days' },
+                  ].map((opt) => (
+                      <button
+                          key={opt.id}
+                          className={`btn btn-sm rounded-full normal-case font-medium ${lookbackOption === opt.id ? 'btn-primary' : 'btn-ghost bg-base-200/50 hover:bg-base-300'}`}
+                          onClick={() => { setLookbackOption(opt.id as any); setShowCustomRange(false); }}
+                      >
+                          {opt.label}
+                      </button>
+                  ))}
+
+                  <div 
+                    className="relative inline-block"
+                    onMouseEnter={() => {
+                        setLookbackOption('custom'); 
+                        setShowCustomRange(true); 
+                    }}
+                    onMouseLeave={() => {
+                        setShowCustomRange(false);
+                    }}
+                  >
+                    <button
+                        className={`btn btn-sm rounded-full normal-case font-medium ${lookbackOption === 'custom' ? 'btn-primary' : 'btn-ghost bg-base-200/50 hover:bg-base-300'}`}
+                        // Remove onClick toggle since hover handles it, but keep for click support
+                        onClick={() => { setLookbackOption('custom'); setShowCustomRange(true); }}
+                    >
+                        Custom range
+                    </button>
+                    
+                    {showCustomRange && (
+                        <div className="absolute top-full left-0 pt-2 z-50">
+                            <DateRangePicker 
+                                startDate={customStartDate} 
+                                endDate={customEndDate} 
+                                onChange={(start, end) => {
+                                    setCustomStartDate(start);
+                                    setCustomEndDate(end);
+                                }} 
+                            />
+                        </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Max results</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={limit}
-                    onChange={(e) => {
-                       const val = parseInt(e.target.value);
-                       if (!isNaN(val)) setLimit(val);
-                    }}
-                    className="input input-bordered input-xs w-16 text-center"
-                  />
-                </label>
-                <input
-                  type="range"
-                  min={1}
-                  max={100}
-                  step={1}
-                  value={limit}
-                  onChange={(e) => setLimit(parseInt((e.target as HTMLInputElement).value, 10))}
-                  className="range range-primary"
-                />
-                <div className="flex justify-between px-2 text-xs opacity-60 mt-1 font-mono">
-                  <span>1</span>
-                  <span>25</span>
-                  <span>50</span>
-                  <span>100</span>
-                </div>
-              </div>
+
             </div>
 
-            <div className="rounded-xl bg-base-200 p-4 shadow-sm flex-1">
+            <div className="rounded-xl bg-base-200 p-4 shadow-sm">
               <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Sources</h3>
               
               <div className="space-y-3">
@@ -389,11 +500,11 @@ export default function HomePage() {
                   <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
                     <input 
                       type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-secondary" 
+                      className="checkbox checkbox-xs checkbox-primary" 
                       checked={isAllAISelected}
                       onChange={toggleAllAI}
                     />
-                    <span className="text-sm font-semibold">AI / ML</span>
+                    <span className="text-sm">AI conferences</span>
                   </label>
                   <div className="pl-6 space-y-1">
                     {aiConferences.map(conf => (
@@ -416,11 +527,11 @@ export default function HomePage() {
                   <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
                     <input 
                       type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-secondary" 
+                      className="checkbox checkbox-xs checkbox-primary" 
                       checked={isAllSystemsSelected}
                       onChange={toggleAllSystems}
                     />
-                    <span className="text-sm font-semibold">Systems</span>
+                    <span className="text-sm">Systems conferences</span>
                   </label>
                   <div className="pl-6 space-y-1">
                     {systemsConferences.map(conf => (
@@ -441,43 +552,103 @@ export default function HomePage() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex flex-col gap-4 overflow-hidden h-[calc(100vh-100px)]">
+          <main className="flex flex-col gap-4 overflow-hidden h-full">
             
             {/* Search Box Area */}
             <div className="flex-none">
-              <div className="relative">
-                <form onSubmit={onSubmit}>
-                  <textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        onSubmit(e);
-                      }
-                    }}
-                    placeholder="Describe what you are looking for..."
-                    className="textarea textarea-bordered w-full bg-base-200 text-base shadow-sm placeholder:opacity-50 focus:border-primary focus:outline-none min-h-[100px] resize-none py-3 px-4 rounded-xl"
-                  />
-                  <button 
-                    type="submit"
-                    className="absolute bottom-3 right-3 btn btn-primary btn-sm rounded-lg"
-                    disabled={loading}
-                  >
-                    {loading ? 'Searching...' : 'Search'}
-                  </button>
-                </form>
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-secondary/50 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur-sm"></div>
+                <div className="relative bg-base-100 rounded-2xl overflow-hidden shadow-sm border border-base-200">
+                  <form onSubmit={onSubmit}>
+                    <textarea
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          onSubmit(e);
+                        }
+                      }}
+                      placeholder="e.g. 'Efficient attention mechanisms for long sequences' or paste a paper abstract..."
+                      className="w-full bg-transparent text-base placeholder:opacity-40 focus:outline-none min-h-[120px] resize-none py-4 px-5"
+                    />
+                  </form>
+                  
+                  {/* Footer with Search Button and Info */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-base-200/50 border-t border-base-200/50 backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-sm text-base-content/60 max-w-[70%]">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 flex-none">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                      </svg>
+                      <span className="truncate">Describe your research interest or paste an abstract to find similar papers</span>
+                    </div>
+                    <button  
+                      onClick={(e) => onSubmit(e as any)}
+                      className="btn btn-primary btn-sm rounded-lg px-6 shadow-md shadow-primary/20 h-9 font-bold tracking-wide"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                          <>
+                              <span className="loading loading-spinner loading-xs mr-2"></span>
+                              Searching...
+                          </>
+                      ) : (
+                          <>
+                              SEARCH
+                          </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="flex flex-none items-center justify-between px-1">
-                <span className="text-sm opacity-60">{results.length} results found</span>
+                <span className="text-sm opacity-60">
+                  {(limit === 'all' || limit === '') ? results.length : Math.min(results.length, limit as number)} results found
+                </span>
                 
-                {/* Custom Sort Pill Button */}
-                <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-sm btn-outline gap-2 rounded-full border-base-300 bg-base-100 hover:bg-base-200 hover:border-base-content/20 normal-case font-medium">
+                <div className="flex items-center gap-2">
+                  {/* Max Results Input */}
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-base-300 bg-base-100 hover:border-base-content/20 transition-colors h-8">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 opacity-70">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                      </svg>
+                      <span className="text-sm font-medium">Max Result:</span>
+            <input
+                type="text"
+                value={limit === 'all' ? 'All' : limit}
+                onChange={(e) => {
+                   let val = e.target.value;
+                   
+                   // Handle case where user types number while "All" is selected (e.g. "All1")
+                   if (limit === 'all' && val.toLowerCase().startsWith('all') && val.length > 3) {
+                       val = val.substring(3);
+                   }
+                   
+                   if (val === '') {
+                      setLimit('');
+                   } else if (val.toLowerCase() === 'all') {
+                      setLimit('all');
+                   } else {
+                      const num = parseInt(val);
+                      if (!isNaN(num) && num >= 0) {
+                          setLimit(num);
+                      } else if (limit === 'all') {
+                          // If user modifies "All" to something invalid (e.g. "Al"), clear it to allow typing
+                          setLimit('');
+                      }
+                   }
+                }}
+                className="w-10 bg-transparent text-sm font-medium focus:outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+                  </div>
+
+                  {/* Custom Sort Pill Button */}
+                  <div className="dropdown dropdown-end">
+                    <label tabIndex={0} className="btn btn-sm btn-outline gap-2 rounded-full border-base-300 bg-base-100 hover:bg-base-200 hover:border-base-content/20 normal-case font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="21" x2="3" y1="6" y2="6"></line>
                       <line x1="15" x2="3" y1="12" y2="12"></line>
@@ -491,14 +662,78 @@ export default function HomePage() {
                     <li><a className={sortBy === 'citation' ? 'active' : ''} onClick={() => { setSortBy('citation'); setSortDirection('desc'); (document.activeElement as HTMLElement)?.blur(); }}>Citations</a></li>
                   </ul>
                 </div>
+                </div>
               </div>
             )}
 
             {/* Results List */}
-            <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-10 custom-scrollbar">
-              {sortedResults.map((p) => (
-                <PaperCard key={p.paper_id} p={p} navigateToAbstract={navigateToAbstract} />
-              ))}
+            <div className="flex-1 space-y-4 pr-2 pb-10">
+              {(() => {
+                  const limitedResults = limit === 'all' || limit === '' ? sortedResults : sortedResults.slice(0, limit as number);
+                  const totalPages = Math.ceil(limitedResults.length / itemsPerPage);
+                  const currentResults = limitedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+                  
+                  return (
+                    <>
+                        {currentResults.map((p) => (
+                            <PaperCard key={p.paper_id} p={p} navigateToAbstract={navigateToAbstract} />
+                        ))}
+                        
+                        {/* Pagination Controls */}
+                        {limitedResults.length > itemsPerPage && (
+                            <div className="flex justify-center items-center gap-2 mt-8 select-none">
+                                <button 
+                                    className="btn btn-sm btn-ghost gap-1"
+                                    onClick={() => {
+                                        setCurrentPage(p => Math.max(1, p - 1));
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    disabled={currentPage === 1}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                    </svg>
+                                    Previous
+                                </button>
+                                
+                                <div className="flex items-center">
+                                    {Array.from({ length: totalPages }).map((_, i) => {
+                                        const page = i + 1;
+                                        // Simple logic to show limited pages if too many, similar to Google's style logic
+                                        // For now, let's just show all since we won't have 100 pages in mock
+                                        return (
+                                            <button
+                                                key={page}
+                                                className={`btn btn-sm btn-ghost w-8 h-8 p-0 rounded-full font-medium ${currentPage === page ? 'text-primary bg-primary/10' : 'text-base-content/70'}`}
+                                                onClick={() => {
+                                                    setCurrentPage(page);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                            >
+                                                {page}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                <button 
+                                    className="btn btn-sm btn-ghost gap-1"
+                                    onClick={() => {
+                                        setCurrentPage(p => Math.min(totalPages, p + 1));
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                    </>
+                  );
+              })()}
 
               {results.length === 0 && !loading && (
                 <div className="flex h-full flex-col items-center justify-center text-center opacity-30 mt-20">
