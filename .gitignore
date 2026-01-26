@@ -8,6 +8,7 @@ __pycache__/
 
 # Frontend build artifacts
 frontend/.next/
+frontend/.next-dev/
 frontend/out/
 frontend/.eslintcache
 frontend/node_modules/
@@ -24,3 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 logs/
+
+# Local Tooling
+.shared/
+.trae/

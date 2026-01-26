@@ -276,6 +276,33 @@ class PaperDatabase:
                 ORDER BY similarity ASC
                 LIMIT %s::INTEGER
             """, [embedding, start_date, end_date, limit]).fetchall()
+
+    def get_papers_by_author(self, author: str, limit: int = 100):
+        author = (author or "").strip()
+        if not author:
+            return []
+
+        pattern = f"%{author}%"
+
+        with self.con.cursor() as cur:
+            return cur.execute(
+                """
+                SELECT paper_id, title, abstract, source, update_date, link
+                FROM paper
+                WHERE (
+                  (jsonb_typeof(document->'authors') = 'string' AND (document->>'authors') ILIKE %s)
+                  OR
+                  (jsonb_typeof(document->'authors') = 'array' AND EXISTS (
+                    SELECT 1
+                    FROM jsonb_array_elements(document->'authors') AS elem
+                    WHERE (elem->>'Name') ILIKE %s OR (elem->>'name') ILIKE %s
+                  ))
+                )
+                ORDER BY update_date DESC
+                LIMIT %s::INTEGER
+                """,
+                [pattern, pattern, pattern, limit],
+            ).fetchall()
     
     # TODO: Add a way of finding the next conference date for each source
     def summarise_current_conferences(self):

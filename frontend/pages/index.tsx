@@ -1,22 +1,70 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { DateRangePicker } from "../components/DateRangePicker";
+import { getMockPapersByFirstAuthor, MOCK_PAPERS, type Paper } from "../lib/mockPapers";
+import {
+  AUTHOR_EXPERTISE,
+  DEMO_LLM_EFFICIENCY_RESULTS,
+  type DemoPaper,
+} from "../lib/llmEfficiencyDemo";
 
-type Paper = {
-  paper_id: string;
-  title: string;
-  abstract: string;
-  source?: string | null;
-  link?: string | null;
-  paper_date?: string | null;
-  citation_count?: number;
-  authors?: string;
-};
+type SearchPaper = DemoPaper;
 
-function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (abstract: string) => void }) {
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+function tokenizeQuery(text: string): string[] {
+  const rawTokens = text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, " ")
+    .split(/[\s,]+/g)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const unique = new Set<string>();
+  for (const t of rawTokens) unique.add(t);
+  return Array.from(unique);
+}
+
+function computeRelevanceScore(p: Paper, terms: string[]): number {
+  const title = p.title.toLowerCase();
+  const abstract = p.abstract.toLowerCase();
+  const keywords = (p.keywords || []).join(" ").toLowerCase();
+
+  let score = 0;
+  for (const term of terms) {
+    if (!term) continue;
+    if (title.includes(term)) score += 6;
+    if (keywords.includes(term)) score += 4;
+    if (abstract.includes(term)) score += 2;
+  }
+  return score;
+}
+
+function PaperCard({
+  p,
+  navigateToAbstract,
+  selectAuthor,
+  showExpertiseSignal,
+}: {
+  p: SearchPaper;
+  navigateToAbstract: (paper: SearchPaper) => void;
+  selectAuthor: (authorName: string) => void;
+  showExpertiseSignal: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const abstractRef = useRef<HTMLParagraphElement | null>(null);
   const [canToggle, setCanToggle] = useState(false);
+
+  const firstAuthorName = useMemo(() => {
+    if (p.first_author && p.first_author.trim()) return p.first_author.trim();
+    if (!p.authors) return null;
+    const firstGroup = p.authors.split(";")[0]?.trim() ?? "";
+    if (!firstGroup) return null;
+    const withoutParens = firstGroup.replace(/\([^)]*\)/g, "").trim();
+    const beforeAffiliation = withoutParens.split(",")[0]?.trim() ?? "";
+    return beforeAffiliation || null;
+  }, [p.authors, p.first_author]);
 
   // Extract affiliation from authors string
   // Supports formats: "Name (Affiliation)" or "Name, Affiliation"
@@ -64,6 +112,26 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
             <div className="flex flex-wrap items-center gap-3 text-xs text-base-content/70 mb-3">
                <span className="badge badge-sm badge-outline font-medium">{p.source || 'Unknown'}</span>
                {p.paper_date && <span>{new Date(p.paper_date).toLocaleDateString()}</span>}
+              {firstAuthorName && (
+                <>
+                  <span className="badge badge-sm badge-outline font-medium">First Author</span>
+                  <button
+                    type="button"
+                    className="badge badge-sm badge-outline font-medium text-base-content/70 border-base-content/20 cursor-pointer hover:text-primary hover:border-primary/40 transition-colors"
+                    title={`Show ${firstAuthorName}'s evidence panel`}
+                    onClick={() => selectAuthor(firstAuthorName)}
+                  >
+                    {firstAuthorName}
+                  </button>
+                  {showExpertiseSignal && p.expertise_match_badge && (
+                    <span className="tooltip tooltip-bottom" data-tip={p.expertise_match_badge}>
+                      <span className="badge badge-sm badge-outline border-primary text-primary font-medium">
+                        Expertise Match
+                      </span>
+                    </span>
+                  )}
+                </>
+              )}
                {affiliation && (
                  <span className="flex items-center gap-1 max-w-[200px] truncate" title={affiliation}>
                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
@@ -72,20 +140,17 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
                    {affiliation}
                  </span>
                )}
-               {p.citation_count !== undefined && (
-                 <span className="citation-tooltip-wrapper">
-                   <span className="flex items-center gap-1">
-                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                       <path d="M3.288 4.819A1.5 1.5 0 001 6.095v5.855c0 .518.315.963.769 1.216l7.462 3.865a1 1 0 00.94 0l7.462-3.865a1.375 1.375 0 00.769-1.216V6.095a1.5 1.5 0 00-2.288-1.276l-6.416 3.325-6.416-3.325z" />
-                       <path d="M3.288 1.5A1.5 1.5 0 001 2.776v1.168l8.308 4.306 8.308-4.306V2.776a1.5 1.5 0 00-2.288-1.276l-6.416 3.325L3.288 1.5z" />
-                     </svg>
-                     {p.citation_count}
-                   </span>
-                   <span className="citation-tooltip-bubble">
-                     citation
-                   </span>
-                 </span>
-               )}
+              {p.citation_count !== undefined && (
+                <span className="tooltip tooltip-bottom" data-tip="citation">
+                  <span className="flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path d="M3.288 4.819A1.5 1.5 0 001 6.095v5.855c0 .518.315.963.769 1.216l7.462 3.865a1 1 0 00.94 0l7.462-3.865a1.375 1.375 0 00.769-1.216V6.095a1.5 1.5 0 00-2.288-1.276l-6.416 3.325-6.416-3.325z" />
+                      <path d="M3.288 1.5A1.5 1.5 0 001 2.776v1.168l8.308 4.306 8.308-4.306V2.776a1.5 1.5 0 00-2.288-1.276l-6.416 3.325L3.288 1.5z" />
+                    </svg>
+                    {p.citation_count}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
           {p.link && (
@@ -122,7 +187,7 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
         <div className="card-actions mt-4 justify-end">
           <button 
             className="btn btn-xs btn-outline"
-            onClick={() => navigateToAbstract(p.abstract)}
+            onClick={() => navigateToAbstract(p)}
           >
             Find Similar
           </button>
@@ -133,7 +198,11 @@ function PaperCard({ p, navigateToAbstract }: { p: Paper; navigateToAbstract: (a
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const hydratingFromUrlRef = useRef(false);
+  const lastUrlSyncRef = useRef<{ href: string; ts: number } | null>(null);
   const [text, setText] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   
   // Lookback Window State
   const [lookbackOption, setLookbackOption] = useState<'any' | 'pastYear' | 'pastMonth' | 'pastWeek' | 'custom'>('any');
@@ -176,46 +245,144 @@ export default function HomePage() {
   });
   const [loading, setLoading] = useState(false);
   const lastRequestIdRef = useRef<number>(0);
-  const [results, setResults] = useState<Paper[]>([]);
+  const [results, setResults] = useState<SearchPaper[]>([]);
   
   const [sortBy, setSortBy] = useState<"relevance" | "date" | "citation">("relevance");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    const saved = window.localStorage.getItem("oversight_theme");
+    return saved === "light" ? "light" : "dark";
+  });
+  const [refineByExpertise, setRefineByExpertise] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [authorModalOpen, setAuthorModalOpen] = useState(false);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const buildSearchUrl = useCallback((overrideQuery?: string, overridePage?: number) => {
+    const q = (overrideQuery ?? submittedQuery).trim();
+    const page = overridePage ?? currentPage;
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (page && page !== 1) params.set("page", String(page));
+    if (refineByExpertise) params.set("refine", "1");
+    if (sortBy !== "relevance") params.set("sort", sortBy);
+    if (sortDirection !== "desc") params.set("dir", sortDirection);
+    if (limit !== "all" && limit !== "") params.set("limit", String(limit));
+    const qs = params.toString();
+    return qs ? `/?${qs}` : "/";
+  }, [currentPage, limit, refineByExpertise, sortBy, sortDirection, submittedQuery]);
+  const syncUrlState = useCallback((overrideQuery?: string, overridePage?: number) => {
+    if (!router.isReady) return;
+    if (hydratingFromUrlRef.current) return;
+    const href = buildSearchUrl(overrideQuery, overridePage);
+    const current = (router.asPath || "/").split("#")[0];
+    if (current === href) return;
 
-  useEffect(() => {
+    const now = Date.now();
+    const last = lastUrlSyncRef.current;
+    if (last && last.href === href && now - last.ts < 300) return;
+    lastUrlSyncRef.current = { href, ts: now };
+    router.replace(href, undefined, { shallow: true });
+  }, [buildSearchUrl, router]);
+  function selectAuthor(authorName: string) {
+    setSelectedAuthor(authorName);
+    setAuthorModalOpen(true);
+  }
+
+  useIsomorphicLayoutEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-theme", theme);
+      window.localStorage.setItem("oversight_theme", theme);
     }
   }, [theme]);
 
+  useEffect(() => {
+    if (!router.isReady) return;
+    const qRaw = router.query.q;
+    const q = typeof qRaw === "string" ? qRaw : "";
+    if (!q) return;
+
+    const pageRaw = router.query.page;
+    const pageParsed = typeof pageRaw === "string" ? parseInt(pageRaw, 10) : NaN;
+    const page = Number.isFinite(pageParsed) && pageParsed > 0 ? pageParsed : 1;
+
+    const refine = router.query.refine === "1";
+
+    const sortRaw = router.query.sort;
+    const sort = sortRaw === "date" || sortRaw === "citation" ? sortRaw : "relevance";
+
+    const dirRaw = router.query.dir;
+    const dir = dirRaw === "asc" || dirRaw === "desc" ? dirRaw : "desc";
+
+    const limitRaw = router.query.limit;
+    const limitParsed = typeof limitRaw === "string" ? parseInt(limitRaw, 10) : NaN;
+    const nextLimit: number | "all" | "" = Number.isFinite(limitParsed) && limitParsed >= 0 ? limitParsed : "all";
+
+    hydratingFromUrlRef.current = true;
+    setText(q);
+    setSubmittedQuery(q);
+    setSortBy(sort);
+    setSortDirection(dir);
+    setLimit(nextLimit);
+    setRefineByExpertise(refine);
+    setCurrentPage(page);
+    setTimeout(() => {
+      onSubmit({ preventDefault: () => {} } as React.FormEvent, q, { preservePage: true, page });
+      hydratingFromUrlRef.current = false;
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
+
   // Reset pagination when search changes
   useEffect(() => {
+      if (hydratingFromUrlRef.current) return;
       setCurrentPage(1);
-  }, [text, lookbackOption, limit, sortBy, sortDirection]);
+  }, [text, lookbackOption, limit, sortBy, sortDirection, refineByExpertise]);
 
   // Trigger search when time range or sources changes
   useEffect(() => {
+    if (hydratingFromUrlRef.current) return;
     if (text.trim()) {
       onSubmit({ preventDefault: () => {} } as React.FormEvent);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lookbackOption, customStartDate, customEndDate, sources]);
 
+  useEffect(() => {
+    if (hydratingFromUrlRef.current) return;
+    if (!submittedQuery.trim()) return;
+    syncUrlState();
+  }, [currentPage, refineByExpertise, sortBy, sortDirection, limit, submittedQuery, syncUrlState]);
+
   // Conference categories
   const aiConferences = ['ICML', 'NeurIPS', 'ICLR'];
   const systemsConferences = ['OSDI', 'SOSP', 'ASPLOS', 'ATC', 'NSDI', 'MLSys', 'EuroSys', 'VLDB'];
 
   // Remove timeLabel useMemo as it's no longer needed
+  const isExpertiseDemo = useMemo(() => {
+    return results.some((p) => typeof p.semantic_score === "number" && Boolean(p.author_expertise));
+  }, [results]);
 
   const sortedResults = useMemo(() => {
     let res = [...results];
-    
+
     if (sortBy === "relevance") {
-        return res;
+      const hasSemanticScores = res.some((p) => typeof p.semantic_score === "number");
+      if (!hasSemanticScores) return res;
+
+      const semanticScore = (p: SearchPaper) => (typeof p.semantic_score === "number" ? p.semantic_score : 0);
+      const expertiseBoost = (p: SearchPaper) => {
+        if (!refineByExpertise) return 0;
+        const pubs = p.author_expertise?.publicationsInDomain ?? 0;
+        const inst = (p.author_expertise?.institution ?? "").toLowerCase();
+        const isExpert = pubs >= 20 && inst.includes("stanford");
+        return isExpert ? 10 : 0;
+      };
+
+      return res.sort((a, b) => (semanticScore(b) + expertiseBoost(b)) - (semanticScore(a) + expertiseBoost(a)));
     }
 
     return res.sort((a, b) => {
@@ -231,7 +398,81 @@ export default function HomePage() {
       }
       return 0;
     });
-  }, [results, sortBy, sortDirection]);
+  }, [results, sortBy, sortDirection, refineByExpertise]);
+
+  const limitedResults = useMemo(() => {
+    return limit === "all" || limit === "" ? sortedResults : sortedResults.slice(0, limit as number);
+  }, [sortedResults, limit]);
+
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(limitedResults.length / itemsPerPage));
+  }, [limitedResults.length, itemsPerPage]);
+
+  const currentResults = useMemo(() => {
+    return limitedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [limitedResults, currentPage, itemsPerPage]);
+
+  const currentOrderKey = useMemo(() => {
+    return currentResults.map((p) => p.paper_id).join("|");
+  }, [currentResults]);
+
+  function closeAuthorModal() {
+    setAuthorModalOpen(false);
+  }
+  function openAuthorPage(authorName: string) {
+    const from = encodeURIComponent(buildSearchUrl());
+    const url = `/author/${encodeURIComponent(authorName)}?from=${from}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  const reorderItemEls = useRef<Map<string, HTMLDivElement>>(new Map());
+  const reorderPrevRects = useRef<Map<string, DOMRect>>(new Map());
+
+  useLayoutEffect(() => {
+    const nextRects = new Map<string, DOMRect>();
+    for (const p of currentResults) {
+      const el = reorderItemEls.current.get(p.paper_id);
+      if (!el) continue;
+      nextRects.set(p.paper_id, el.getBoundingClientRect());
+    }
+
+    const prevRects = reorderPrevRects.current;
+    for (const [id, nextRect] of nextRects.entries()) {
+      const prevRect = prevRects.get(id);
+      if (!prevRect) continue;
+      const dx = prevRect.left - nextRect.left;
+      const dy = prevRect.top - nextRect.top;
+      if (dx === 0 && dy === 0) continue;
+      const el = reorderItemEls.current.get(id);
+      if (!el) continue;
+      el.animate(
+        [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "translate(0, 0)" }],
+        { duration: 260, easing: "cubic-bezier(0.2, 0, 0, 1)" }
+      );
+    }
+
+    reorderPrevRects.current = nextRects;
+  }, [currentOrderKey, currentResults]);
+
+  const evidenceAuthorName = selectedAuthor ?? "";
+  const evidenceAuthorPapers = useMemo(() => {
+    return evidenceAuthorName ? getMockPapersByFirstAuthor(evidenceAuthorName) : [];
+  }, [evidenceAuthorName]);
+
+  const evidenceExpertise = useMemo(() => {
+    if (!evidenceAuthorName) return null;
+    const fromMap = AUTHOR_EXPERTISE[evidenceAuthorName];
+    if (fromMap) return fromMap;
+    const papers = getMockPapersByFirstAuthor(evidenceAuthorName);
+    const institution =
+      papers[0]?.authors?.split(";")[0]?.split(",").slice(1).join(",").trim() || "Unknown";
+    return {
+      author: evidenceAuthorName,
+      institution,
+      domain: "LLM Optimization",
+      publicationsInDomain: papers.length,
+    };
+  }, [evidenceAuthorName]);
 
   const isAllAISelected = aiConferences.every(conf => sources[conf as keyof typeof sources]);
   const isAllSystemsSelected = systemsConferences.every(conf => sources[conf as keyof typeof sources]);
@@ -258,10 +499,21 @@ export default function HomePage() {
     });
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(
+    e: React.FormEvent,
+    overrideText?: string,
+    options?: { preservePage?: boolean; page?: number }
+  ) {
     e.preventDefault();
-    if (!text.trim()) return;
-    
+    const queryText = (overrideText ?? text).trim();
+    if (!queryText) return;
+
+    const preservePage = options?.preservePage ?? false;
+    const pageForUrl = options?.page ?? (preservePage ? currentPage : 1);
+
+    setSubmittedQuery(queryText);
+    if (!preservePage) setCurrentPage(1);
+    syncUrlState(queryText, pageForUrl);
     setLoading(true);
     setResults([]);
 
@@ -270,59 +522,20 @@ export default function HomePage() {
 
     setTimeout(() => {
       if (lastRequestIdRef.current !== reqId) return;
-      
-      const baseResults: Paper[] = [
-        {
-          paper_id: "1",
-          title: "Optimizing LLM Inference with Speculative Decoding",
-          authors: "Charlie Chen, CMU; Yang Li, Google",
-          abstract: "This paper presents a novel approach to speed up LLM inference by leveraging a smaller draft model to generate candidate tokens, which are then verified by the larger target model in parallel. We show that this method can achieve 2-3x speedups on standard benchmarks without compromising generation quality.",
-          source: "ICML",
-          paper_date: "2023-07-01",
-          link: "https://arxiv.org/abs/2301.00001",
-          citation_count: 145
-        },
-        {
-          paper_id: "2",
-          title: "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
-          authors: "Tri Dao, Stanford University; Daniel Y. Fu, Stanford University",
-          abstract: "We introduce FlashAttention, an IO-aware exact attention algorithm that uses tiling to reduce the number of memory accesses between GPU HBM and on-chip SRAM. FlashAttention trains Transformers faster than existing baselines: 15% end-to-end wall-clock speedup on BERT-large (seqlen 512), 3x speedup on GPT-2 (seqlen 1K), and 2.4x speedup on long-range arena (seqlen 1K-4K).",
-          source: "NeurIPS",
-          paper_date: "2022-12-01",
-          link: "https://arxiv.org/abs/2205.14135",
-          citation_count: 890
-        },
-        {
-          paper_id: "3",
-          title: "Older Paper Example for Sorting Test",
-          authors: "Jane Doe, MIT",
-          abstract: "An older paper to test if date sorting works correctly. This paper discusses fundamental concepts in distributed systems consensus algorithms.",
-          source: "OSDI",
-          paper_date: "2020-10-15",
-          link: "#",
-          citation_count: 3200
-        },
-        {
-          paper_id: "4",
-          title: "Recent Advances in Graph Neural Networks",
-          authors: "John Smith, DeepMind",
-          abstract: "A comprehensive survey of Graph Neural Networks (GNNs) covering various architectures including Graph Convolutional Networks (GCNs), Graph Attention Networks (GATs), and their applications in social network analysis, drug discovery, and recommendation systems.",
-          source: "ICLR",
-          paper_date: "2024-01-10",
-          link: "#",
-          citation_count: 12
-        },
-        {
-          paper_id: "5",
-          title: "Large Language Models in Healthcare: A Comprehensive Review",
-          authors: "Sarah Johnson, Harvard Medical School",
-          abstract: "The integration of Large Language Models (LLMs) into healthcare systems presents both transformative opportunities and significant challenges. This review explores the current state of LLM applications in medical diagnosis, patient record analysis, and drug discovery. We analyze the performance of various models including GPT-4, Med-PaLM, and others across a range of medical benchmarks. Furthermore, we discuss critical ethical considerations such as data privacy, bias in model outputs, and the necessity for human-in-the-loop verification systems. The paper also proposes a new framework for evaluating the clinical safety of LLMs before deployment. Our findings suggest that while LLMs demonstrate remarkable potential in assisting healthcare professionals, substantial work remains in ensuring their reliability and explainability in critical medical contexts. We conclude with a roadmap for future research directions in medical AI.",
-          source: "Nature Medicine",
-          paper_date: "2024-02-15",
-          link: "#",
-          citation_count: 45
-        },
-      ];
+
+      const normalizedQuery = queryText.toLowerCase();
+      const isLlmEfficiencyDemo = normalizedQuery.includes("multi-hop");
+      if (isLlmEfficiencyDemo) {
+        setSortBy("relevance");
+        setLimit("all");
+        setResults(DEMO_LLM_EFFICIENCY_RESULTS);
+        setLoading(false);
+        return;
+      }
+
+      const baseResults: SearchPaper[] = MOCK_PAPERS.filter((p) =>
+        ["mh1", "sd1", "fa1", "sort1", "gnn1", "med1"].includes(p.paper_id)
+      );
 
       // Filter baseResults based on lookbackOption and sources
       const filteredResults = baseResults.filter(p => {
@@ -362,9 +575,27 @@ export default function HomePage() {
         return pDate >= cutoffDate;
       });
 
+      const terms = tokenizeQuery(queryText);
+      const resultsBeforeLimit = (() => {
+        if (terms.length === 0) return filteredResults;
+
+        const scored = filteredResults.map((p, idx) => ({
+          p,
+          idx,
+          score: computeRelevanceScore(p, terms)
+        }));
+
+        const anyMatch = scored.some((s) => s.score > 0);
+        if (!anyMatch) return filteredResults;
+
+        return scored
+          .sort((a, b) => (b.score - a.score) || (a.idx - b.idx))
+          .map((s) => s.p);
+      })();
+
       // Duplicate mock data to simulate a full page of results
       const extendedResults = Array.from({ length: 20 }).flatMap((_, i) => 
-        filteredResults.map(p => ({
+        resultsBeforeLimit.map(p => ({
           ...p,
           paper_id: `${p.paper_id}-${i}`,
           // Only append suffix for duplicates to keep the first set clean
@@ -377,16 +608,22 @@ export default function HomePage() {
     }, 600);
   }
 
-  function navigateToAbstract(abstract: string) {
-    setText(abstract);
+  function navigateToAbstract(paper: SearchPaper) {
+    const keywords = paper.keywords && paper.keywords.length > 0
+      ? paper.keywords
+      : tokenizeQuery(paper.title).slice(0, 6);
+
+    const nextText = keywords.join(" ");
+    setText(nextText);
+    setSortBy("relevance");
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => {
-      onSubmit({ preventDefault: () => {} } as React.FormEvent);
+      onSubmit({ preventDefault: () => {} } as React.FormEvent, nextText);
     }, 100);
   }
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-base-100 font-sans text-base-content">
+    <div className="min-h-screen bg-base-100 font-sans text-base-content">
       <Head>
         <title>Oversight - Academic Search</title>
         <meta name="description" content="Embeddings-backed academic paper search" />
@@ -662,94 +899,175 @@ export default function HomePage() {
                     <li><a className={sortBy === 'citation' ? 'active' : ''} onClick={() => { setSortBy('citation'); setSortDirection('desc'); (document.activeElement as HTMLElement)?.blur(); }}>Citations</a></li>
                   </ul>
                 </div>
+                  {isExpertiseDemo && (
+                    <>
+                      <label className="flex cursor-pointer items-center gap-2 px-3 py-1 rounded-full border border-base-300 bg-base-100 hover:border-base-content/20 transition-colors h-8">
+                        <span className="text-sm font-medium">Refine by Expertise</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary toggle-sm"
+                          checked={refineByExpertise}
+                          onChange={(e) => setRefineByExpertise(e.target.checked)}
+                        />
+                      </label>
+                    </>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Results List */}
-            <div className="flex-1 space-y-4 pr-2 pb-10">
-              {(() => {
-                  const limitedResults = limit === 'all' || limit === '' ? sortedResults : sortedResults.slice(0, limit as number);
-                  const totalPages = Math.ceil(limitedResults.length / itemsPerPage);
-                  const currentResults = limitedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-                  
-                  return (
-                    <>
-                        {currentResults.map((p) => (
-                            <PaperCard key={p.paper_id} p={p} navigateToAbstract={navigateToAbstract} />
-                        ))}
-                        
-                        {/* Pagination Controls */}
-                        {limitedResults.length > itemsPerPage && (
-                            <div className="flex justify-center items-center gap-2 mt-8 select-none">
-                                <button 
-                                    className="btn btn-sm btn-ghost gap-1"
-                                    onClick={() => {
-                                        setCurrentPage(p => Math.max(1, p - 1));
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    disabled={currentPage === 1}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                    </svg>
-                                    Previous
-                                </button>
-                                
-                                <div className="flex items-center">
-                                    {Array.from({ length: totalPages }).map((_, i) => {
-                                        const page = i + 1;
-                                        // Simple logic to show limited pages if too many, similar to Google's style logic
-                                        // For now, let's just show all since we won't have 100 pages in mock
-                                        return (
-                                            <button
-                                                key={page}
-                                                className={`btn btn-sm btn-ghost w-8 h-8 p-0 rounded-full font-medium ${currentPage === page ? 'text-primary bg-primary/10' : 'text-base-content/70'}`}
-                                                onClick={() => {
-                                                    setCurrentPage(page);
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                }}
-                                            >
-                                                {page}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
 
-                                <button 
-                                    className="btn btn-sm btn-ghost gap-1"
-                                    onClick={() => {
-                                        setCurrentPage(p => Math.min(totalPages, p + 1));
-                                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                                    }}
-                                    disabled={currentPage === totalPages}
-                                >
-                                    Next
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </button>
-                            </div>
-                        )}
-                    </>
-                  );
-              })()}
+            <div className="flex-1 overflow-auto">
+                <div className="space-y-4 pr-2 pb-10">
+                  {currentResults.map((p) => (
+                    <div
+                      key={p.paper_id}
+                      ref={(el) => {
+                        if (!el) {
+                          reorderItemEls.current.delete(p.paper_id);
+                          return;
+                        }
+                        reorderItemEls.current.set(p.paper_id, el);
+                      }}
+                      className="will-change-transform"
+                    >
+                      <PaperCard
+                        p={p}
+                        navigateToAbstract={navigateToAbstract}
+                        selectAuthor={selectAuthor}
+                        showExpertiseSignal={isExpertiseDemo && refineByExpertise}
+                      />
+                    </div>
+                  ))}
 
-              {results.length === 0 && !loading && (
-                <div className="flex h-full flex-col items-center justify-center text-center opacity-30 mt-20">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mb-4">
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                   </svg>
-                   <p className="text-lg font-medium">No papers selected</p>
+                  {limitedResults.length > itemsPerPage && (
+                    <div className="flex justify-center items-center gap-2 mt-8 select-none">
+                      <button
+                        className="btn btn-sm btn-ghost gap-1"
+                        onClick={() => {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        disabled={currentPage === 1}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                        Previous
+                      </button>
+
+                      <div className="flex items-center">
+                        {Array.from({ length: totalPages }).map((_, i) => {
+                          const page = i + 1;
+                          return (
+                            <button
+                              key={page}
+                              className={`btn btn-sm btn-ghost w-8 h-8 p-0 rounded-full font-medium ${currentPage === page ? "text-primary bg-primary/10" : "text-base-content/70"}`}
+                              onClick={() => {
+                                setCurrentPage(page);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        className="btn btn-sm btn-ghost gap-1"
+                        onClick={() => {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {results.length === 0 && !loading && (
+                    <div className="flex h-full flex-col items-center justify-center text-center opacity-30 mt-20">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mb-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                      <p className="text-lg font-medium">No papers selected</p>
+                    </div>
+                  )}
+
+                  {loading && (
+                    <div className="flex h-full flex-col items-center justify-center text-center mt-20">
+                      <div className="loader"></div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {loading && (
-                <div className="flex h-full flex-col items-center justify-center text-center mt-20">
-                   <div className="loader"></div>
-                </div>
-              )}
             </div>
+
+            {authorModalOpen && evidenceAuthorName && (
+              <div className="modal modal-open" onClick={closeAuthorModal}>
+                <div className="modal-box max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-bold">Author Evidence</h3>
+                      <div className="text-sm opacity-70">{evidenceAuthorName}</div>
+                      <div className="text-sm opacity-70">{evidenceExpertise?.institution ?? "Unknown"}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline"
+                        onClick={() => openAuthorPage(evidenceAuthorName)}
+                      >
+                        Open
+                      </button>
+                      <button type="button" className="btn btn-sm btn-ghost btn-circle" onClick={closeAuthorModal}>
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-base-200/40 border border-base-300/50 p-3">
+                      <div className="text-xs opacity-60">Publications in {evidenceExpertise?.domain ?? "the domain"}</div>
+                      <div className="text-lg font-bold">{evidenceExpertise?.publicationsInDomain ?? evidenceAuthorPapers.length}</div>
+                    </div>
+                    <div className="rounded-lg bg-base-200/40 border border-base-300/50 p-3">
+                      <div className="text-xs opacity-60">Papers in database</div>
+                      <div className="text-lg font-bold">{evidenceAuthorPapers.length}</div>
+                    </div>
+                  </div>
+
+                  <div className="divider my-4" />
+
+                  <div className="text-xs font-bold uppercase tracking-wider opacity-70">
+                    Papers by this author
+                  </div>
+                  <div className="mt-2 max-h-[55vh] overflow-auto space-y-2 pr-1">
+                    {evidenceAuthorPapers.slice(0, 30).map((p) => (
+                      <a
+                        key={p.paper_id}
+                        href={p.link || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-lg bg-base-200/40 border border-base-300/50 p-3 hover:bg-base-200 transition-colors"
+                      >
+                        <div className="text-sm font-semibold leading-snug">
+                          {p.title}
+                        </div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs opacity-70">
+                          <span className="badge badge-xs badge-outline">{p.source || "Unknown"}</span>
+                          {p.paper_date && <span>{new Date(p.paper_date).toLocaleDateString()}</span>}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>

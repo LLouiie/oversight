@@ -7,6 +7,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 
 from PaperRepository import PaperRepository
+from PaperDatabase import PaperDatabase
 from ArXivRepository import ArXivRepository
 from ResearchListener import research_listener_group
 
@@ -136,6 +137,36 @@ def search() -> tuple[dict, int]:
         })
 
     return {"results": results}, 200
+
+
+@app.get("/api/author/papers")
+def author_papers() -> tuple[dict, int]:
+    author_name = (request.args.get("name") or "").strip()
+    if not author_name:
+        return {"error": "name is required"}, 400
+
+    limit = request.args.get("limit")
+    try:
+        limit_int = int(limit) if limit is not None else 100
+        limit_int = max(1, min(500, limit_int))
+    except Exception:
+        return {"error": "limit must be an integer between 1 and 500"}, 400
+
+    with PaperDatabase() as db:
+        rows = db.get_papers_by_author(author_name, limit=limit_int)
+
+    results = []
+    for paper_id, title, abstract, source, update_date, link in rows:
+        results.append({
+            "paper_id": paper_id,
+            "title": title,
+            "abstract": abstract,
+            "source": source,
+            "link": link,
+            "paper_date": update_date.isoformat() if hasattr(update_date, "isoformat") else str(update_date),
+        })
+
+    return {"author": author_name, "results": results}, 200
 
 
 @app.post("/api/sync")
