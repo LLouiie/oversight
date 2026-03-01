@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { DateRangePicker } from "../components/DateRangePicker";
-import { MOCK_PAPERS, type Paper } from "../lib/mockPapers";
+import { type Paper } from "../lib/mockPapers";
 
 function tokenizeQuery(text: string): string[] {
   const rawTokens = text
@@ -16,20 +16,25 @@ function tokenizeQuery(text: string): string[] {
   return Array.from(unique);
 }
 
-function computeRelevanceScore(p: Paper, terms: string[]): number {
-  const title = p.title.toLowerCase();
-  const abstract = p.abstract.toLowerCase();
-  const keywords = (p.keywords || []).join(" ").toLowerCase();
+type QueryGroupResult = {
+  branch_id: string;
+  status?: string;
+  search_query?: string | null;
+  error?: string | null;
+  results?: Paper[];
+};
 
-  let score = 0;
-  for (const term of terms) {
-    if (!term) continue;
-    if (title.includes(term)) score += 6;
-    if (keywords.includes(term)) score += 4;
-    if (abstract.includes(term)) score += 2;
-  }
-  return score;
-}
+type AgentMeta = {
+  enabled: boolean;
+  round1_status?: string;
+  partial_success?: boolean;
+  model?: string;
+  base_url?: string;
+  error?: string;
+  debug?: {
+    round1_output?: Record<string, unknown>;
+  };
+};
 
 function PaperCard({
   p,
@@ -225,7 +230,10 @@ export default function HomePage() {
   });
   const [loading, setLoading] = useState(false);
   const lastRequestIdRef = useRef<number>(0);
+  const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Paper[]>([]);
+  const [queryGroups, setQueryGroups] = useState<QueryGroupResult[] | null>(null);
+  const [agentMeta, setAgentMeta] = useState<AgentMeta | null>(null);
   
   const [sortBy, setSortBy] = useState<"relevance" | "date" | "citation">("relevance");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -324,88 +332,102 @@ export default function HomePage() {
     const queryText = (overrideText ?? text).trim();
     if (!queryText) return;
     
+    setError(null);
     setLoading(true);
     setResults([]);
+    setQueryGroups(null);
+    setAgentMeta(null);
 
     const reqId = Date.now();
     lastRequestIdRef.current = reqId;
 
-    setTimeout(() => {
-      if (lastRequestIdRef.current !== reqId) return;
-      
-      const baseResults: Paper[] = MOCK_PAPERS.filter((p) =>
-        ["mh1", "sd1", "fa1", "sort1", "gnn1", "med1"].includes(p.paper_id)
-      );
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
 
-      // Filter baseResults based on lookbackOption and sources
-      const filteredResults = baseResults.filter(p => {
-        // Source filtering
-        if (p.source && (p.source in sources)) {
-            if (!sources[p.source as keyof typeof sources]) return false;
-        }
+    const requestBody: Record<string, unknown> = {
+      text: queryText,
+      sources,
+      limit: (() => {
+        if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) return Math.max(1, Math.min(100, limit));
+        if (limit === "") return 10;
+        return 100;
+      })(),
+    };
 
-        if (!p.paper_date) return true;
-        const pDate = new Date(p.paper_date);
-        const year = pDate.getFullYear();
-        
-        if (lookbackOption === 'any') return true;
-        
-        if (lookbackOption === 'custom') {
-            // Compare dates
-            const start = new Date(customStartDate);
-            const end = new Date(customEndDate);
-            // Reset hours to ensure inclusive comparison
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
-            return pDate >= start && pDate <= end;
-        }
+    if (lookbackOption === "custom") {
+      requestBody.start_date = customStartDate;
+      requestBody.end_date = customEndDate;
 
-        const now = new Date();
-        const cutoffDate = new Date(now);
-        
-        if (lookbackOption === 'pastYear') {
-            cutoffDate.setFullYear(now.getFullYear() - 1);
-        } else if (lookbackOption === 'pastMonth') {
-            cutoffDate.setMonth(now.getMonth() - 1);
-        } else if (lookbackOption === 'pastWeek') {
-            cutoffDate.setDate(now.getDate() - 7);
-        }
-        
-        cutoffDate.setHours(0,0,0,0);
-        return pDate >= cutoffDate;
+      const start = new Date(`${customStartDate}T00:00:00`);
+      const end = new Date(`${customEndDate}T23:59:59.999`);
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+      if (Number.isFinite(diffDays) && diffDays > 0) requestBody.time_window_days = diffDays;
+    } else if (lookbackOption !== "any") {
+      const days = lookbackOption === "pastYear" ? 365 : lookbackOption === "pastMonth" ? 30 : 7;
+      requestBody.time_window_days = days;
+      const start = new Date(now);
+      start.setDate(start.getDate() - days);
+      requestBody.start_date = start.toISOString().slice(0, 10);
+      requestBody.end_date = today;
+    }
+
+    try {
+      const resp = await fetch(`/api/search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+        cache: "no-store",
+        body: JSON.stringify(requestBody),
       });
 
-      const terms = tokenizeQuery(queryText);
-      const resultsBeforeLimit = (() => {
-        if (terms.length === 0) return filteredResults;
+      const contentType = resp.headers.get("content-type") || "";
+      const payload: any = contentType.includes("application/json") ? await resp.json() : await resp.text();
+      if (!resp.ok) {
+        const msg = typeof payload === "string" ? payload : payload?.error || `Request failed: ${resp.status}`;
+        throw new Error(msg);
+      }
 
-        const scored = filteredResults.map((p, idx) => ({
-          p,
-          idx,
-          score: computeRelevanceScore(p, terms)
-        }));
+      if (lastRequestIdRef.current !== reqId) return;
 
-        const anyMatch = scored.some((s) => s.score > 0);
-        if (!anyMatch) return filteredResults;
+      const data = typeof payload === "string" ? {} : payload;
+      const directResults: Paper[] = Array.isArray(data.results) ? data.results : [];
+      const groups: QueryGroupResult[] | null = Array.isArray(data.query_groups) ? data.query_groups : null;
+      const agent: AgentMeta | null = data?.agent || null;
 
-        return scored
-          .sort((a, b) => (b.score - a.score) || (a.idx - b.idx))
-          .map((s) => s.p);
-      })();
+      let mergedResults: Paper[] = directResults;
+      if (mergedResults.length === 0 && groups) {
+        const seen = new Set<string>();
+        const collected: Paper[] = [];
+        for (const g of groups) {
+          for (const p of g?.results || []) {
+            if (!p?.paper_id) continue;
+            if (seen.has(p.paper_id)) continue;
+            seen.add(p.paper_id);
+            collected.push(p);
+          }
+        }
+        mergedResults = collected;
+      }
 
-      // Duplicate mock data to simulate a full page of results
-      const extendedResults = Array.from({ length: 20 }).flatMap((_, i) => 
-        resultsBeforeLimit.map(p => ({
-          ...p,
-          paper_id: `${p.paper_id}-${i}`,
-          // Only append suffix for duplicates to keep the first set clean
-          title: i === 0 ? p.title : `${p.title} [Copy ${i}]` 
-        }))
-      );
-      
-      setResults(extendedResults);
-      setLoading(false);
-    }, 600);
+      if (lookbackOption === "custom") {
+        const start = new Date(`${customStartDate}T00:00:00`);
+        const end = new Date(`${customEndDate}T23:59:59.999`);
+        mergedResults = mergedResults.filter((p) => {
+          if (!p.paper_date) return true;
+          const d = new Date(p.paper_date);
+          if (Number.isNaN(d.getTime())) return true;
+          return d >= start && d <= end;
+        });
+      }
+
+      setResults(mergedResults);
+      setQueryGroups(groups);
+      setAgentMeta(agent);
+    } catch (err: any) {
+      if (lastRequestIdRef.current !== reqId) return;
+      setError(err?.message || String(err));
+    } finally {
+      if (lastRequestIdRef.current === reqId) setLoading(false);
+    }
   }
 
   function navigateToAbstract(paper: Paper) {
@@ -639,6 +661,49 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+
+            {error && (
+              <div className="alert alert-error flex-none">
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            {(agentMeta || (queryGroups && queryGroups.length > 0)) && (
+              <details className="collapse collapse-arrow bg-base-200 border border-base-300 flex-none">
+                <summary className="collapse-title text-sm font-medium">Agent details</summary>
+                <div className="collapse-content text-sm">
+                  {agentMeta && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <span className={`badge ${agentMeta.enabled ? "badge-primary" : "badge-ghost"}`}>Agent {agentMeta.enabled ? "on" : "off"}</span>
+                      {agentMeta.round1_status && <span className="badge badge-outline">R1: {agentMeta.round1_status}</span>}
+                      {agentMeta.partial_success && <span className="badge badge-warning">partial success</span>}
+                      {agentMeta.model && <span className="badge badge-neutral">{agentMeta.model}</span>}
+                      {agentMeta.error && <span className="badge badge-error">error</span>}
+                    </div>
+                  )}
+                  {Array.isArray(queryGroups) && queryGroups.length > 0 && (
+                    <div className="space-y-2">
+                      {queryGroups.map((g) => (
+                        <div key={g.branch_id} className="rounded-lg bg-base-100 p-3 border border-base-300/50">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="badge badge-primary">{g.branch_id}</span>
+                            {g.status && (
+                              <span className={`badge ${g.status === "success" ? "badge-success" : g.status === "timeout" ? "badge-warning" : "badge-error"}`}>{g.status}</span>
+                            )}
+                            <span className="text-xs opacity-60">{(g.results?.length ?? 0)} results</span>
+                          </div>
+                          {g.search_query && <div className="mt-2 text-xs opacity-70 break-words">{g.search_query}</div>}
+                          {g.error && <div className="mt-2 text-xs text-error break-words">{g.error}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {agentMeta?.debug?.round1_output && (
+                    <pre className="mt-3 max-h-52 overflow-auto rounded bg-base-100 p-3 text-xs border border-base-300/50">{JSON.stringify(agentMeta.debug.round1_output, null, 2)}</pre>
+                  )}
+                </div>
+              </details>
+            )}
 
             {/* Toolbar */}
             {results.length > 0 && (
