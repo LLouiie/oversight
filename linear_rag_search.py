@@ -145,8 +145,9 @@ class LinearRAGSearchEngine:
             from src.LinearRAG import LinearRAG
         except Exception as exc:  # pragma: no cover - environment specific
             raise RuntimeError(
-                "LinearRAG dependencies are missing. Install at least: "
-                "sentence-transformers, spacy, python-igraph, torch."
+                f"LinearRAG retrieval failed: LinearRAG dependencies are missing. "
+                "Install at least: sentence-transformers, spacy, python-igraph, torch. "
+                f"(Original error: {exc})"
             ) from exc
 
         try:
