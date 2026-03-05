@@ -9,6 +9,7 @@ export type Paper = {
   citation_count?: number;
   authors?: string;
   first_author?: string;
+  semantic_score?: number;
 };
 
 export const MOCK_PAPERS: Paper[] = [

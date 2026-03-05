@@ -147,6 +147,11 @@ function PaperCard({
                    </span>
                  </span>
                )}
+               {p.semantic_score !== undefined && (
+                 <span className="badge badge-sm badge-secondary font-mono bg-secondary/10 text-secondary border-secondary/20">
+                   Score: {p.semantic_score.toFixed(3)}
+                 </span>
+               )}
             </div>
           </div>
           {p.link && (
@@ -219,6 +224,7 @@ export default function HomePage() {
   const [showCustomRange, setShowCustomRange] = useState(false);
   const [rerankEnabled, setRerankEnabled] = useState(false);
   const [rerankMaxInput, setRerankMaxInput] = useState(60);
+  const [viewMode, setViewMode] = useState<"subquery" | "rerank">("subquery");
 
   const [limit, setLimit] = useState<number | 'all' | ''>('all');
   const [sources, setSources] = useState({
@@ -768,9 +774,28 @@ export default function HomePage() {
             {/* Toolbar */}
             {results.length > 0 && (
               <div className="flex flex-none items-center justify-between px-1">
-                <span className="text-sm opacity-60">
-                  {(limit === 'all' || limit === '') ? results.length : Math.min(results.length, limit as number)} results found
-                </span>
+                <div className="flex items-center gap-4">
+                  <div className="tabs tabs-boxed bg-base-100 border border-base-300 h-8 p-0.5">
+                    <a 
+                      className={`tab tab-sm h-full rounded-md transition-all ${viewMode === 'subquery' ? 'tab-active !bg-primary !text-primary-content' : 'hover:bg-base-200'}`}
+                      onClick={() => setViewMode('subquery')}
+                    >
+                      Subqueries
+                    </a>
+                    <a 
+                      className={`tab tab-sm h-full rounded-md transition-all ${viewMode === 'rerank' ? 'tab-active !bg-primary !text-primary-content' : 'hover:bg-base-200'}`}
+                      onClick={() => {
+                        setViewMode('rerank');
+                        if (!rerankEnabled) setRerankEnabled(true);
+                      }}
+                    >
+                      Reranked All
+                    </a>
+                  </div>
+                  <span className="text-sm opacity-60">
+                    {(limit === 'all' || limit === '') ? results.length : Math.min(results.length, limit as number)} results found
+                  </span>
+                </div>
                 
                 <div className="flex items-center gap-2">
                   {/* Max Results Input */}
@@ -829,7 +854,7 @@ export default function HomePage() {
 
             {/* Results List */}
             <div className="flex-1 space-y-4 pr-2 pb-10">
-              {hasBranchResults && Array.isArray(queryGroups) && (
+              {viewMode === "subquery" && hasBranchResults && Array.isArray(queryGroups) ? (
                 <div className="space-y-6">
                   {queryGroups.map((g) => {
                     const papers = g.results || [];
@@ -863,9 +888,7 @@ export default function HomePage() {
                     );
                   })}
                 </div>
-              )}
-
-              {!hasBranchResults && (() => {
+              ) : (() => {
                   const limitedResults = limit === 'all' || limit === '' ? sortedResults : sortedResults.slice(0, limit as number);
                   const totalPages = Math.ceil(limitedResults.length / itemsPerPage);
                   const currentResults = limitedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
