@@ -162,7 +162,7 @@ NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:5001 npm run dev
   ],
   "query_groups": [
     {
-      "branch_id": "branch_a",
+      "branch_id": "branch_0",
       "status": "success",
       "search_query": "...",
       "error": null,
@@ -181,7 +181,7 @@ NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:5001 npm run dev
 
 字段说明：
 - `results`: 聚合去重后的扁平检索结果（前端主要显示这一层）
-- `query_groups`: Agent 每个分支（`branch_a/b/c`）的检索详情
+- `query_groups`: Agent 每个检索方向（`branch_0`…`branch_{n-1}`，由 Round 1 的 `directions` 数量决定）的详情
 - `agent`: Agent 运行状态和元信息
 
 ### 6.3 代码位置（按职责）

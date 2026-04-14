@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 from typing import Any, Dict, List
 
@@ -138,6 +139,9 @@ def run_search(
 
 
 def _branch_label(branch_id: str) -> str:
+    match = re.fullmatch(r"branch_(\d+)", branch_id)
+    if match:
+        return str(int(match.group(1)) + 1)
     mapping = {"branch_a": "A", "branch_b": "B", "branch_c": "C"}
     return mapping.get(branch_id, branch_id)
 
@@ -157,7 +161,7 @@ def _render_paper_card(row: dict[str, Any], key_prefix: str) -> None:
 def main() -> None:
     st.set_page_config(page_title="Oversight Agent Search", layout="wide")
     st.title("Oversight Agent Search (Streamlit)")
-    st.caption("Two-round agent decomposition -> 3 parallel retrieval queries")
+    st.caption("Two-round agent decomposition -> one retrieval per model-chosen direction")
 
     with st.sidebar:
         st.header("Search Controls")

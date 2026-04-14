@@ -24,6 +24,7 @@ def test_decompose_round1_success_round2_all_success(monkeypatch):
             "constraints": [],
             "facets": [],
             "notes": [],
+            "directions": ["a", "b", "c"],
             "raw": {"intent": "test intent"},
         },
     )
@@ -31,9 +32,9 @@ def test_decompose_round1_success_round2_all_success(monkeypatch):
         agent,
         "_run_round2_parallel",
         lambda query_text, round1_output: [
-            QueryBranchResult(branch_id="branch_a", status="success", search_query="qa"),
-            QueryBranchResult(branch_id="branch_b", status="success", search_query="qb"),
-            QueryBranchResult(branch_id="branch_c", status="success", search_query="qc"),
+            QueryBranchResult(branch_id="branch_0", status="success", search_query="qa"),
+            QueryBranchResult(branch_id="branch_1", status="success", search_query="qb"),
+            QueryBranchResult(branch_id="branch_2", status="success", search_query="qc"),
         ],
     )
 
@@ -59,9 +60,9 @@ def test_decompose_partial_success(monkeypatch):
         agent,
         "_run_round2_parallel",
         lambda query_text, round1_output: [
-            QueryBranchResult(branch_id="branch_a", status="success", search_query="qa"),
-            QueryBranchResult(branch_id="branch_b", status="timeout", error="timeout"),
-            QueryBranchResult(branch_id="branch_c", status="success", search_query="qc"),
+            QueryBranchResult(branch_id="branch_0", status="success", search_query="qa"),
+            QueryBranchResult(branch_id="branch_1", status="timeout", error="timeout"),
+            QueryBranchResult(branch_id="branch_2", status="success", search_query="qc"),
         ],
     )
 
@@ -84,9 +85,9 @@ def test_round2_branch_timeout(monkeypatch):
 
     monkeypatch.setattr(agent, "_chat_completion", raise_timeout)
 
-    result = agent._run_round2_branch("branch_a", "q", {"intent": "x"})
+    result = agent._run_round2_branch("branch_0", 0, "method angle", "q", {"intent": "x"})
 
-    assert result.branch_id == "branch_a"
+    assert result.branch_id == "branch_0"
     assert result.status == "timeout"
     assert result.search_query is None
 
@@ -100,19 +101,21 @@ def test_round2_branch_invalid_json(monkeypatch):
 
     monkeypatch.setattr(agent, "_chat_completion", lambda _messages: "not-json")
 
-    result = agent._run_round2_branch("branch_b", "q", {"intent": "x"})
+    result = agent._run_round2_branch("branch_1", 1, "systems angle", "q", {"intent": "x"})
 
-    assert result.branch_id == "branch_b"
+    assert result.branch_id == "branch_1"
     assert result.status == "invalid_output"
     assert "JSON" in (result.error or "")
 
 
-def test_decompose_disabled_when_prompts_are_placeholders():
+def test_decompose_disabled_when_prompts_are_placeholders(monkeypatch):
     agent = QueryDecompositionAgent(
         base_url="http://localhost:8000/v1",
         model="local-model",
         enabled=True,
     )
+
+    monkeypatch.setattr(agent, "_prompts_configured", lambda: False)
 
     run = agent.decompose("query")
 

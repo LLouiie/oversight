@@ -11,14 +11,9 @@ from typing import Any
 import requests
 
 
-BRANCH_IDS = ("branch_a", "branch_b", "branch_c")
 PROMPTS_DIR = Path(__file__).resolve().parent / "prompts" / "query_decomposition"
 ROUND1_PROMPT_PATH = PROMPTS_DIR / "round1.md"
-ROUND2_BRANCH_PROMPT_PATHS = {
-    "branch_a": PROMPTS_DIR / "round2_branch_a.md",
-    "branch_b": PROMPTS_DIR / "round2_branch_b.md",
-    "branch_c": PROMPTS_DIR / "round2_branch_c.md",
-}
+ROUND2_PROMPT_PATH = PROMPTS_DIR / "round2.md"
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -35,6 +30,16 @@ def _string_env(name: str, default: str = "") -> str:
     return raw.strip()
 
 
+def _int_env(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or not str(raw).strip():
+        return default
+    try:
+        return int(str(raw).strip())
+    except ValueError:
+        return default
+
+
 def _coerce_string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
@@ -49,6 +54,25 @@ def _coerce_string_list(value: Any) -> list[str]:
             if rendered:
                 items.append(rendered)
     return items
+
+
+def _branch_id_for_index(index: int) -> str:
+    return f"branch_{index}"
+
+
+def _extract_directions_from_skeleton(plan: Any) -> list[str]:
+    if not isinstance(plan, list):
+        return []
+    out: list[str] = []
+    for item in plan:
+        if not isinstance(item, dict):
+            continue
+        text = item.get("instruction") or item.get("focus_area") or item.get("focus")
+        if isinstance(text, str):
+            stripped = text.strip()
+            if stripped:
+                out.append(stripped)
+    return out
 
 
 def _coerce_notes(value: Any) -> list[str]:
@@ -173,18 +197,16 @@ class QueryDecompositionAgent:
             self.timeout_seconds = 20.0
         self.enabled = _bool_env("LOCAL_AGENT_ENABLED", True) if enabled is None else enabled
         self.debug = _bool_env("LOCAL_AGENT_DEBUG", False) if debug is None else debug
+        self.max_directions = max(1, min(100, _int_env("QUERY_DECOMPOSITION_MAX_DIRECTIONS", 16)))
         self.round1_prompt_template = self._load_prompt_file(ROUND1_PROMPT_PATH)
-        self.round2_branch_prompts = {
-            branch_id: self._load_prompt_file(path)
-            for branch_id, path in ROUND2_BRANCH_PROMPT_PATHS.items()
-        }
+        self.round2_prompt_template = self._load_prompt_file(ROUND2_PROMPT_PATH)
 
     @classmethod
     def from_env(cls) -> "QueryDecompositionAgent":
         return cls()
 
     def decompose(self, query_text: str) -> QueryDecompositionRun:
-        empty_branches = [QueryBranchResult(branch_id=b, status="failed") for b in BRANCH_IDS]
+        empty_branches: list[QueryBranchResult] = []
 
         if not self.enabled:
             return QueryDecompositionRun(
@@ -246,7 +268,9 @@ class QueryDecompositionAgent:
     def _prompts_configured(self) -> bool:
         if not self.round1_prompt_template or self.round1_prompt_template.strip() == "TODO":
             return False
-        return all(prompt and prompt.strip() != "TODO" for prompt in self.round2_branch_prompts.values())
+        if not self.round2_prompt_template or self.round2_prompt_template.strip() == "TODO":
+            return False
+        return True
 
     def _load_prompt_file(self, path: Path) -> str:
         try:
@@ -305,21 +329,51 @@ class QueryDecompositionAgent:
         ]
         raw = self._chat_completion(messages)
         parsed = _extract_json_object(raw)
-        return self._normalize_round1_output(parsed)
+        return self._normalize_round1_output(parsed, query_text)
 
     def _run_round2_parallel(
         self,
         query_text: str,
         round1_output: dict[str, Any],
     ) -> list[QueryBranchResult]:
+        directions = round1_output.get("directions")
+        if not isinstance(directions, list):
+            directions = []
+        specs: list[tuple[str, int, str]] = []
+        for index, direction in enumerate(directions):
+            if not isinstance(direction, str):
+                continue
+            stripped = direction.strip()
+            if not stripped:
+                continue
+            specs.append((_branch_id_for_index(index), index, stripped))
+            if len(specs) >= self.max_directions:
+                break
+
+        if not specs:
+            return [
+                QueryBranchResult(
+                    branch_id=_branch_id_for_index(0),
+                    status="failed",
+                    error="Round 1 produced no usable directions",
+                )
+            ]
+
         by_branch: dict[str, QueryBranchResult] = {
-            branch_id: QueryBranchResult(branch_id=branch_id, status="failed")
-            for branch_id in BRANCH_IDS
+            branch_id: QueryBranchResult(branch_id=branch_id, status="failed") for branch_id, _, _ in specs
         }
-        with ThreadPoolExecutor(max_workers=len(BRANCH_IDS)) as executor:
+        workers = min(len(specs), max(1, self.max_directions))
+        with ThreadPoolExecutor(max_workers=workers) as executor:
             future_to_branch = {
-                executor.submit(self._run_round2_branch, branch_id, query_text, round1_output): branch_id
-                for branch_id in BRANCH_IDS
+                executor.submit(
+                    self._run_round2_branch,
+                    branch_id,
+                    direction_index,
+                    direction_text,
+                    query_text,
+                    round1_output,
+                ): branch_id
+                for branch_id, direction_index, direction_text in specs
             }
             for future in as_completed(future_to_branch):
                 branch_id = future_to_branch[future]
@@ -338,15 +392,16 @@ class QueryDecompositionAgent:
                         error=f"Round 2 branch failed: {exc}",
                     )
 
-        return [by_branch[branch_id] for branch_id in BRANCH_IDS]
+        return [by_branch[branch_id] for branch_id, _, _ in specs]
 
     def _run_round2_branch(
         self,
         branch_id: str,
+        direction_index: int,
+        direction_text: str,
         query_text: str,
         round1_output: dict[str, Any],
     ) -> QueryBranchResult:
-        prompt_template = self.round2_branch_prompts[branch_id]
         messages = [
             {
                 "role": "system",
@@ -359,7 +414,9 @@ class QueryDecompositionAgent:
                 "role": "user",
                 "content": self._render_round2_prompt(
                     branch_id=branch_id,
-                    prompt_template=prompt_template,
+                    direction_index=direction_index,
+                    direction_text=direction_text,
+                    prompt_template=self.round2_prompt_template,
                     query_text=query_text,
                     round1_output=round1_output,
                 ),
@@ -410,41 +467,76 @@ class QueryDecompositionAgent:
             f"{self.round1_prompt_template}\n\n"
             "User query:\n"
             f"{query_text}\n\n"
-            "Return a JSON object with this schema:\n"
-            "{"
-            '"intent": string, '
-            '"keywords": string[], '
-            '"constraints": string[], '
-            '"facets": string[], '
-            '"notes": string[]'
-            "}"
+            "Your reply must be a single JSON object matching the keys and example shape in the instructions above "
+            "(all keys required; `directions` must have at least one string, at most "
+            f"{self.max_directions}; use fewer when the query is narrow)."
         )
 
     def _render_round2_prompt(
         self,
         *,
         branch_id: str,
+        direction_index: int,
+        direction_text: str,
         prompt_template: str,
         query_text: str,
         round1_output: dict[str, Any],
     ) -> str:
         return (
             f"{prompt_template}\n\n"
-            f"Branch: {branch_id}\n\n"
+            f"Branch id: {branch_id}\n"
+            f"Direction index: {direction_index}\n\n"
+            "This direction (focus for this search only):\n"
+            f"{direction_text}\n\n"
             "Original user query:\n"
             f"{query_text}\n\n"
             "Round 1 analysis (JSON):\n"
             f"{json.dumps(round1_output, ensure_ascii=True)}\n\n"
-            "Return JSON only with schema: {\"search_query\": string}"
+            "Your reply must be one JSON object as in the Round 2 instructions: only the key "
+            '`search_query` (string, non-empty). Example: {"search_query": "..."}'
         )
 
-    def _normalize_round1_output(self, raw: dict[str, Any]) -> dict[str, Any]:
+    def _normalize_round1_output(self, raw: dict[str, Any], query_text: str) -> dict[str, Any]:
         # Keep a stable schema for downstream prompts even if the model returns extras.
+        directions = _coerce_string_list(raw.get("directions"))
+        if not directions:
+            directions = _extract_directions_from_skeleton(raw.get("skeleton_plan"))
+        if not directions:
+            nested = raw.get("raw")
+            if isinstance(nested, dict):
+                directions = _coerce_string_list(nested.get("directions"))
+                if not directions:
+                    directions = _extract_directions_from_skeleton(nested.get("skeleton_plan"))
+
+        # Dedupe while preserving order
+        seen: set[str] = set()
+        deduped: list[str] = []
+        for d in directions:
+            key = d.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(d)
+        directions = deduped[: self.max_directions]
+
+        if not directions:
+            intent = str(raw.get("intent", "")).strip()
+            if intent:
+                directions = [intent]
+            else:
+                kws = _coerce_string_list(raw.get("keywords"))
+                if kws:
+                    directions = [" ".join(kws[:12])]
+                else:
+                    fallback = (query_text or "").strip()
+                    directions = [fallback] if fallback else ["General retrieval"]
+
         return {
             "intent": str(raw.get("intent", "")).strip(),
             "keywords": _coerce_string_list(raw.get("keywords")),
             "constraints": _coerce_string_list(raw.get("constraints")),
             "facets": _coerce_string_list(raw.get("facets")),
             "notes": _coerce_notes(raw.get("notes")),
+            "directions": directions,
             "raw": raw,
         }

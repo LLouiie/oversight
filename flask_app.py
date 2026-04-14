@@ -13,8 +13,9 @@ from ArXivRepository import ArXivRepository
 from ResearchListener import research_listener_group
 from reranker import BGEReranker
 
-# Load environment variables early so repo/db can connect
-load_dotenv()
+# Load environment variables early so repo/db can connect.
+# override=True ensures repo .env values replace stale inherited shell vars.
+load_dotenv(override=True)
 
 app = Flask(__name__)
 # Allow local Next.js dev server by default; can be customized with CORS_ORIGINS

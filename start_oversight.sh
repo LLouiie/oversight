@@ -12,6 +12,9 @@ mkdir -p "$LOG_DIR"
 
 export NEXT_PUBLIC_BACKEND_URL="http://localhost:5001"
 export FLASK_PORT="5001"
+export LINEAR_RAG_DATA_DIR="$BASE_DIR/data"
+export LINEAR_RAG_ROOT="$BASE_DIR/LinearRAG"
+export LINEAR_RAG_WORKING_DIR="$BASE_DIR/LinearRAG/import"
 
 kill_matching() {
   local pattern="$1"

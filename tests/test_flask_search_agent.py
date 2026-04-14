@@ -65,9 +65,9 @@ class GroupedAgent:
             model="local-model",
             base_url="http://localhost:8000/v1",
             branches=[
-                QueryBranchResult(branch_id="branch_a", status="success", search_query="qa"),
-                QueryBranchResult(branch_id="branch_b", status="timeout", search_query=None, error="timed out"),
-                QueryBranchResult(branch_id="branch_c", status="success", search_query="qc"),
+                QueryBranchResult(branch_id="branch_0", status="success", search_query="qa"),
+                QueryBranchResult(branch_id="branch_1", status="timeout", search_query=None, error="timed out"),
+                QueryBranchResult(branch_id="branch_2", status="success", search_query="qc"),
             ],
             partial_success=True,
             round1_output={"intent": "x"},

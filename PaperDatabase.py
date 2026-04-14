@@ -13,7 +13,7 @@ logger = get_logger()
 
 class PaperDatabase:
     def __init__(self):
-        load_dotenv()
+        load_dotenv(override=True)
         self.ai_categories = ["cs:cs:AI", "cs:cs:CL", "cs:cs:LG", "cs:cs:MA"]
         self.ai_categories_str = "(" + ",".join(f"'{category}'" for category in self.ai_categories) + ")"
         self.con = None
