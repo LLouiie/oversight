@@ -37,6 +37,8 @@ type AgentMeta = {
 };
 
 function branchLabel(branchId: string): string {
+  const m = /^branch_(\d+)$/.exec(branchId);
+  if (m) return `Direction ${Number(m[1]) + 1}`;
   if (branchId === "branch_a") return "Branch A";
   if (branchId === "branch_b") return "Branch B";
   if (branchId === "branch_c") return "Branch C";
