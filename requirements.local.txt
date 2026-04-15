@@ -28,3 +28,4 @@ torch>=2.0.0
 sentence-transformers>=2.2.2
 spacy>=3.6.1
 python-igraph>=0.11.8
+pydantic>=2.0.0
