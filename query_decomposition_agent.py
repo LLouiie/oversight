@@ -1,110 +1,85 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
 from pathlib import Path
-import re
-from typing import Any
+from typing import Any, Optional
 
 import requests
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
+# --- Pydantic Models for Structured Output ---
+
+from pydantic import BaseModel, Field, ValidationError, model_validator, BeforeValidator
+from typing import Annotated
+
+def _ensure_list(v: Any) -> list[str]:
+    if isinstance(v, str):
+        return [v]
+    if isinstance(v, list):
+        return [str(i) for i in v]
+    return []
+
+StrList = Annotated[list[str], BeforeValidator(_ensure_list)]
+
+class Round1Response(BaseModel):
+    """Schema for the first stage of query decomposition in CS/AI research."""
+    reasoning: str = Field(description="Internal technical analysis of the query's unique structure and challenges.")
+    intent: str = Field(description="A short summary of the user's research goal.")
+    keywords: StrList = Field(default_factory=list)
+    constraints: StrList = Field(default_factory=list)
+    facets: StrList = Field(default_factory=list)
+    notes: StrList = Field(default_factory=list)
+    directions: StrList = Field(
+        default_factory=list,
+        description="List of distinct retrieval angles (at least 2 and at most 5 directions)."
+    )
+
+    @model_validator(mode='after')
+    def ensure_directions(self) -> 'Round1Response':
+        """Fallback logic to ensure at least 2 directions exist and enforce max limit."""
+        if len(self.directions) < 2:
+            # If model failed to give 2, try to append intent or keywords as fallback directions
+            fallback = self.intent if self.intent else "General technical implementation"
+            if not self.directions:
+                self.directions = [f"{fallback} (Primary)"]
+            
+            while len(self.directions) < 2:
+                self.directions.append(f"{fallback} (Alternative Angle {len(self.directions)})")
+        
+        # Truncate if it exceeds 5
+        if len(self.directions) > 5:
+            self.directions = self.directions[:5]
+            
+        return self
+
+class Round2Response(BaseModel):
+    """Schema for the second stage: generating a specific high-density search query."""
+    search_query: str = Field(min_length=5, description="An expert-level, keyword-dense search string.")
+
+# --- Utility Helpers ---
 
 PROMPTS_DIR = Path(__file__).resolve().parent / "prompts" / "query_decomposition"
 ROUND1_PROMPT_PATH = PROMPTS_DIR / "round1.md"
 ROUND2_PROMPT_PATH = PROMPTS_DIR / "round2.md"
 
-
 def _bool_env(name: str, default: bool) -> bool:
     raw = os.getenv(name)
-    if raw is None:
-        return default
+    if raw is None: return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
-
 def _string_env(name: str, default: str = "") -> str:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    return raw.strip()
-
+    return os.getenv(name, default).strip()
 
 def _int_env(name: str, default: int) -> int:
-    raw = os.getenv(name)
-    if raw is None or not str(raw).strip():
-        return default
     try:
-        return int(str(raw).strip())
+        return int(os.getenv(name, str(default)))
     except ValueError:
         return default
 
-
-def _coerce_string_list(value: Any) -> list[str]:
-    if not isinstance(value, list):
-        return []
-    items: list[str] = []
-    for item in value:
-        if isinstance(item, str):
-            stripped = item.strip()
-            if stripped:
-                items.append(stripped)
-        elif item is not None:
-            rendered = str(item).strip()
-            if rendered:
-                items.append(rendered)
-    return items
-
-
-def _branch_id_for_index(index: int) -> str:
-    return f"branch_{index}"
-
-
-def _extract_directions_from_skeleton(plan: Any) -> list[str]:
-    if not isinstance(plan, list):
-        return []
-    out: list[str] = []
-    for item in plan:
-        if not isinstance(item, dict):
-            continue
-        text = item.get("instruction") or item.get("focus_area") or item.get("focus")
-        if isinstance(text, str):
-            stripped = text.strip()
-            if stripped:
-                out.append(stripped)
-    return out
-
-
-def _coerce_notes(value: Any) -> list[str]:
-    # Accept either string[] or a single string to avoid dropping model hints.
-    if isinstance(value, str):
-        stripped = value.strip()
-        return [stripped] if stripped else []
-    return _coerce_string_list(value)
-
-
-def _extract_json_object(text: str) -> dict[str, Any]:
-    candidate = text.strip()
-    if candidate.startswith("```"):
-        candidate = re.sub(r"^```(?:json)?\s*", "", candidate)
-        candidate = re.sub(r"\s*```$", "", candidate)
-
-    try:
-        parsed = json.loads(candidate)
-        if isinstance(parsed, dict):
-            return parsed
-    except json.JSONDecodeError:
-        pass
-
-    match = re.search(r"\{.*\}", candidate, re.DOTALL)
-    if not match:
-        raise ValueError("Model output does not contain a JSON object")
-
-    parsed = json.loads(match.group(0))
-    if not isinstance(parsed, dict):
-        raise ValueError("Model output JSON must be an object")
-    return parsed
-
+# --- Result Containers ---
 
 @dataclass
 class QueryBranchResult:
@@ -123,7 +98,6 @@ class QueryBranchResult:
             "results": self.results,
         }
 
-
 @dataclass
 class QueryDecompositionRun:
     enabled: bool
@@ -136,407 +110,147 @@ class QueryDecompositionRun:
     round1_output: dict[str, Any] | None = None
 
     def has_successful_branch(self) -> bool:
-        return any(
-            b.status == "success" and bool((b.search_query or "").strip())
-            for b in self.branches
-        )
+        return any(b.status == "success" and bool((b.search_query or "").strip()) for b in self.branches)
 
     def agent_meta(self, include_debug: bool) -> dict[str, Any]:
-        meta: dict[str, Any] = {
-            "enabled": self.enabled,
-            "round1_status": self.round1_status,
-            "partial_success": self.partial_success,
-            "model": self.model,
-        }
-        if self.base_url:
-            meta["base_url"] = self.base_url
-        if self.error:
-            meta["error"] = self.error
-        if include_debug and self.round1_output is not None:
-            meta["debug"] = {"round1_output": self.round1_output}
+        meta = {"enabled": self.enabled, "round1_status": self.round1_status, 
+                "partial_success": self.partial_success, "model": self.model}
+        if self.base_url: meta["base_url"] = self.base_url
+        if self.error: meta["error"] = self.error
+        if include_debug and self.round1_output: meta["debug"] = {"round1_output": self.round1_output}
         return meta
 
+# --- Main Agent Class ---
 
 class QueryDecompositionAgent:
-    def __init__(
-        self,
-        *,
-        base_url: str | None = None,
-        model: str | None = None,
-        api_key: str | None = None,
-        timeout_seconds: float | None = None,
-        enabled: bool | None = None,
-        debug: bool | None = None,
-    ):
+    def __init__(self, **kwargs):
+        """Initialize agent with environment or constructor settings."""
         self.mode = _string_env("QUERY_DECOMPOSITION_AGENT_MODE", "local").lower()
-        if self.mode not in {"local", "remote"}:
-            self.mode = "local"
-
-        if self.mode == "remote":
-            self.base_url = (base_url or _string_env("API_URL") or _string_env("REMOTE_AGENT_LLM_BASE_URL")).strip()
-            self.model = (model or _string_env("REMOTE_AGENT_LLM_MODEL") or _string_env("LOCAL_AGENT_LLM_MODEL")).strip()
-            self.api_key = api_key if api_key is not None else (_string_env("API_KEY") or _string_env("REMOTE_AGENT_LLM_API_KEY"))
-            timeout_raw = (
-                str(timeout_seconds)
-                if timeout_seconds is not None
-                else (_string_env("REMOTE_AGENT_LLM_TIMEOUT_SECONDS") or _string_env("LOCAL_AGENT_LLM_TIMEOUT_SECONDS") or "20")
-            )
-        else:
-            self.base_url = (base_url or _string_env("LOCAL_AGENT_LLM_BASE_URL")).strip()
-            self.model = (model or _string_env("LOCAL_AGENT_LLM_MODEL")).strip()
-            self.api_key = api_key if api_key is not None else _string_env("LOCAL_AGENT_LLM_API_KEY")
-            timeout_raw = (
-                str(timeout_seconds)
-                if timeout_seconds is not None
-                else _string_env("LOCAL_AGENT_LLM_TIMEOUT_SECONDS", "20")
-            )
-
-        try:
-            self.timeout_seconds = float(timeout_raw)
-        except ValueError:
-            self.timeout_seconds = 20.0
-        self.enabled = _bool_env("LOCAL_AGENT_ENABLED", True) if enabled is None else enabled
-        self.debug = _bool_env("LOCAL_AGENT_DEBUG", False) if debug is None else debug
-        self.max_directions = max(1, min(100, _int_env("QUERY_DECOMPOSITION_MAX_DIRECTIONS", 16)))
+        prefix = "REMOTE_AGENT_LLM_" if self.mode == "remote" else "LOCAL_AGENT_LLM_"
+        
+        self.base_url = (kwargs.get("base_url") or _string_env(f"{prefix}BASE_URL")).strip()
+        self.model = (kwargs.get("model") or _string_env(f"{prefix}MODEL")).strip()
+        self.api_key = kwargs.get("api_key") or _string_env(f"{prefix}API_KEY")
+        
+        timeout_raw = kwargs.get("timeout_seconds") or _string_env(f"{prefix}TIMEOUT_SECONDS", "20")
+        self.timeout_seconds = float(timeout_raw)
+        
+        self.enabled = _bool_env("LOCAL_AGENT_ENABLED", True) if kwargs.get("enabled") is None else kwargs["enabled"]
+        # Enforce range [2, 5] for max directions as per user request
+        self.max_directions = max(2, min(5, _int_env("QUERY_DECOMPOSITION_MAX_DIRECTIONS", 5)))
+        
         self.round1_prompt_template = self._load_prompt_file(ROUND1_PROMPT_PATH)
         self.round2_prompt_template = self._load_prompt_file(ROUND2_PROMPT_PATH)
 
-    @classmethod
-    def from_env(cls) -> "QueryDecompositionAgent":
-        return cls()
-
-    def decompose(self, query_text: str) -> QueryDecompositionRun:
-        empty_branches: list[QueryBranchResult] = []
-
-        if not self.enabled:
-            return QueryDecompositionRun(
-                enabled=False,
-                round1_status="skipped",
-                model=self.model,
-                base_url=self.base_url or None,
-                branches=[],
-                error="Local agent disabled via LOCAL_AGENT_ENABLED",
-            )
-
-        if not self.base_url or not self.model:
-            return QueryDecompositionRun(
-                enabled=False,
-                round1_status="skipped",
-                model=self.model,
-                base_url=self.base_url or None,
-                branches=[],
-                error="Agent not configured (base_url/model missing for selected mode)",
-            )
-
-        if not self._prompts_configured():
-            return QueryDecompositionRun(
-                enabled=False,
-                round1_status="skipped",
-                model=self.model,
-                base_url=self.base_url or None,
-                branches=[],
-                error="Query decomposition prompts are placeholders (TODO)",
-            )
-
-        try:
-            round1_output = self._run_round1(query_text)
-        except Exception as exc:
-            return QueryDecompositionRun(
-                enabled=True,
-                round1_status="failed",
-                model=self.model,
-                base_url=self.base_url,
-                branches=empty_branches,
-                error=f"Round 1 failed: {exc}",
-            )
-
-        branches = self._run_round2_parallel(query_text, round1_output)
-        success_count = sum(1 for b in branches if b.status == "success")
-        partial_success = 0 < success_count < len(branches)
-
-        return QueryDecompositionRun(
-            enabled=True,
-            round1_status="success",
-            model=self.model,
-            base_url=self.base_url,
-            branches=branches,
-            partial_success=partial_success,
-            round1_output=round1_output,
-            error=None if success_count > 0 else "All round-2 branches failed",
-        )
-
-    def _prompts_configured(self) -> bool:
-        if not self.round1_prompt_template or self.round1_prompt_template.strip() == "TODO":
-            return False
-        if not self.round2_prompt_template or self.round2_prompt_template.strip() == "TODO":
-            return False
-        return True
-
     def _load_prompt_file(self, path: Path) -> str:
-        try:
-            return path.read_text(encoding="utf-8").strip()
-        except FileNotFoundError:
-            return ""
+        """Reads prompt content from file."""
+        return path.read_text(encoding="utf-8").strip() if path.exists() else ""
 
-    def _chat_completion(self, messages: list[dict[str, str]]) -> str:
+    def _chat_completion(self, messages: list[dict[str, str]], json_mode: bool = False) -> str:
+        """Executes chat completion with optional JSON mode enforcement."""
         url = self.base_url.rstrip("/") + "/chat/completions"
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": 0,
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+
         response = requests.post(
             url,
             headers={
                 "Content-Type": "application/json",
                 **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}),
             },
-            json={
-                "model": self.model,
-                "messages": messages,
-                "temperature": 0,
-            },
+            json=payload,
             timeout=self.timeout_seconds,
         )
         response.raise_for_status()
-        payload = response.json()
-        choices = payload.get("choices") or []
-        if not choices:
-            raise ValueError("No choices returned from model")
-        message = choices[0].get("message") or {}
-        content = message.get("content")
+        content = response.json()["choices"][0]["message"]["content"]
+        return content if isinstance(content, str) else json.dumps(content)
 
-        if isinstance(content, str):
-            return content
-        if isinstance(content, list):
-            parts = []
-            for item in content:
-                if isinstance(item, dict) and item.get("type") == "text":
-                    parts.append(str(item.get("text", "")))
-                else:
-                    parts.append(str(item))
-            return "".join(parts)
-        raise ValueError("Unsupported message content format from model")
+    def decompose(self, query_text: str) -> QueryDecompositionRun:
+        """Entry point for splitting a query into multiple retrieval branches."""
+        if not self.enabled or not self.base_url or not self.model:
+            return QueryDecompositionRun(enabled=False, round1_status="skipped", model=self.model, 
+                                       base_url=self.base_url, branches=[], error="Configuration missing")
+
+        try:
+            # Step 1: Analyze and split
+            round1_data = self._run_round1(query_text)
+            
+            # Step 2: Generate search queries in parallel
+            branches = self._run_round2_parallel(query_text, round1_data)
+            
+            success_count = sum(1 for b in branches if b.status == "success")
+            return QueryDecompositionRun(
+                enabled=True, round1_status="success", model=self.model, base_url=self.base_url,
+                branches=branches, partial_success=0 < success_count < len(branches),
+                round1_output=round1_data, error=None if success_count > 0 else "All branches failed"
+            )
+        except Exception as exc:
+            return QueryDecompositionRun(enabled=True, round1_status="failed", model=self.model, 
+                                       base_url=self.base_url, branches=[], error=str(exc))
 
     def _run_round1(self, query_text: str) -> dict[str, Any]:
+        """Runs Stage 1 decomposition using JSON mode and Pydantic validation."""
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a query decomposition assistant. "
-                    "Return JSON only. No markdown code fences."
-                ),
-            },
-            {
-                "role": "user",
-                "content": self._render_round1_prompt(query_text),
-            },
+            {"role": "system", "content": "You are a senior CS/AI research orchestrator. Return JSON only."},
+            {"role": "user", "content": f"{self.round1_prompt_template}\n\nUser query: {query_text}"}
         ]
-        raw = self._chat_completion(messages)
-        parsed = _extract_json_object(raw)
-        return self._normalize_round1_output(parsed, query_text)
+        raw = self._chat_completion(messages, json_mode=True)
+        validated = Round1Response.model_validate_json(raw)
+        
+        # Deduplicate and truncate to max_directions
+        unique = []
+        seen = set()
+        for d in validated.directions:
+            if d.lower() not in seen:
+                seen.add(d.lower())
+                unique.append(d)
+        validated.directions = unique[:self.max_directions]
+        
+        return validated.model_dump()
 
-    def _run_round2_parallel(
-        self,
-        query_text: str,
-        round1_output: dict[str, Any],
-    ) -> list[QueryBranchResult]:
-        directions = round1_output.get("directions")
-        if not isinstance(directions, list):
-            directions = []
-        specs: list[tuple[str, int, str]] = []
-        for index, direction in enumerate(directions):
-            if not isinstance(direction, str):
-                continue
-            stripped = direction.strip()
-            if not stripped:
-                continue
-            specs.append((_branch_id_for_index(index), index, stripped))
-            if len(specs) >= self.max_directions:
-                break
+    def _run_round2_parallel(self, query_text: str, round1_output: dict[str, Any]) -> list[QueryBranchResult]:
+        """Runs Stage 2 query generation for each direction in parallel."""
+        directions = round1_output.get("directions", [])
+        if not directions:
+            return [QueryBranchResult(branch_id="branch_0", status="failed", error="No directions found")]
 
-        if not specs:
-            return [
-                QueryBranchResult(
-                    branch_id=_branch_id_for_index(0),
-                    status="failed",
-                    error="Round 1 produced no usable directions",
-                )
-            ]
+        specs = [(f"branch_{i}", i, d) for i, d in enumerate(directions)]
+        by_branch = {bid: QueryBranchResult(branch_id=bid, status="failed") for bid, _, _ in specs}
 
-        by_branch: dict[str, QueryBranchResult] = {
-            branch_id: QueryBranchResult(branch_id=branch_id, status="failed") for branch_id, _, _ in specs
-        }
-        workers = min(len(specs), max(1, self.max_directions))
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            future_to_branch = {
-                executor.submit(
-                    self._run_round2_branch,
-                    branch_id,
-                    direction_index,
-                    direction_text,
-                    query_text,
-                    round1_output,
-                ): branch_id
-                for branch_id, direction_index, direction_text in specs
+        with ThreadPoolExecutor(max_workers=min(len(specs), 10)) as executor:
+            future_to_id = {
+                executor.submit(self._run_round2_branch, bid, idx, txt, query_text, round1_output): bid 
+                for bid, idx, txt in specs
             }
-            for future in as_completed(future_to_branch):
-                branch_id = future_to_branch[future]
+            for future in as_completed(future_to_id):
+                bid = future_to_id[future]
                 try:
-                    by_branch[branch_id] = future.result()
-                except requests.Timeout:
-                    by_branch[branch_id] = QueryBranchResult(
-                        branch_id=branch_id,
-                        status="timeout",
-                        error="Round 2 branch timed out",
-                    )
+                    by_branch[bid] = future.result()
                 except Exception as exc:
-                    by_branch[branch_id] = QueryBranchResult(
-                        branch_id=branch_id,
-                        status="failed",
-                        error=f"Round 2 branch failed: {exc}",
-                    )
+                    by_branch[bid].error = str(exc)
 
-        return [by_branch[branch_id] for branch_id, _, _ in specs]
+        return [by_branch[bid] for bid, _, _ in specs]
 
-    def _run_round2_branch(
-        self,
-        branch_id: str,
-        direction_index: int,
-        direction_text: str,
-        query_text: str,
-        round1_output: dict[str, Any],
-    ) -> QueryBranchResult:
+    def _run_round2_branch(self, branch_id, direction_index, direction_text, query_text, round1_output) -> QueryBranchResult:
+        """Generates an expert-level search query for a specific direction."""
+        prompt = (f"{self.round2_prompt_template}\n\n"
+                  f"Focus Direction: {direction_text}\n"
+                  f"Original Query: {query_text}\n"
+                  f"Full Context Analysis: {json.dumps(round1_output)}")
+        
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a retrieval query generator. "
-                    "Return JSON only with a single key `search_query`."
-                ),
-            },
-            {
-                "role": "user",
-                "content": self._render_round2_prompt(
-                    branch_id=branch_id,
-                    direction_index=direction_index,
-                    direction_text=direction_text,
-                    prompt_template=self.round2_prompt_template,
-                    query_text=query_text,
-                    round1_output=round1_output,
-                ),
-            },
+            {"role": "system", "content": "You are a search query synthesizer for CS researchers. Return JSON only."},
+            {"role": "user", "content": prompt}
         ]
-
+        
         try:
-            raw = self._chat_completion(messages)
-        except requests.Timeout:
-            return QueryBranchResult(
-                branch_id=branch_id,
-                status="timeout",
-                error="Round 2 branch timed out",
-            )
-        except Exception as exc:
-            return QueryBranchResult(
-                branch_id=branch_id,
-                status="failed",
-                error=f"Round 2 branch failed: {exc}",
-            )
-
-        try:
-            parsed = _extract_json_object(raw)
-        except Exception as exc:
-            return QueryBranchResult(
-                branch_id=branch_id,
-                status="invalid_output",
-                error=f"Round 2 output is not valid JSON: {exc}",
-            )
-
-        search_query = parsed.get("search_query")
-        if not isinstance(search_query, str) or not search_query.strip():
-            return QueryBranchResult(
-                branch_id=branch_id,
-                status="invalid_output",
-                error="Round 2 JSON must contain non-empty `search_query`",
-            )
-
-        return QueryBranchResult(
-            branch_id=branch_id,
-            status="success",
-            search_query=search_query.strip(),
-            error=None,
-        )
-
-    def _render_round1_prompt(self, query_text: str) -> str:
-        return (
-            f"{self.round1_prompt_template}\n\n"
-            "User query:\n"
-            f"{query_text}\n\n"
-            "Your reply must be a single JSON object matching the keys and example shape in the instructions above "
-            "(all keys required; `directions` must have at least one string, at most "
-            f"{self.max_directions}; use fewer when the query is narrow)."
-        )
-
-    def _render_round2_prompt(
-        self,
-        *,
-        branch_id: str,
-        direction_index: int,
-        direction_text: str,
-        prompt_template: str,
-        query_text: str,
-        round1_output: dict[str, Any],
-    ) -> str:
-        return (
-            f"{prompt_template}\n\n"
-            f"Branch id: {branch_id}\n"
-            f"Direction index: {direction_index}\n\n"
-            "This direction (focus for this search only):\n"
-            f"{direction_text}\n\n"
-            "Original user query:\n"
-            f"{query_text}\n\n"
-            "Round 1 analysis (JSON):\n"
-            f"{json.dumps(round1_output, ensure_ascii=True)}\n\n"
-            "Your reply must be one JSON object as in the Round 2 instructions: only the key "
-            '`search_query` (string, non-empty). Example: {"search_query": "..."}'
-        )
-
-    def _normalize_round1_output(self, raw: dict[str, Any], query_text: str) -> dict[str, Any]:
-        # Keep a stable schema for downstream prompts even if the model returns extras.
-        directions = _coerce_string_list(raw.get("directions"))
-        if not directions:
-            directions = _extract_directions_from_skeleton(raw.get("skeleton_plan"))
-        if not directions:
-            nested = raw.get("raw")
-            if isinstance(nested, dict):
-                directions = _coerce_string_list(nested.get("directions"))
-                if not directions:
-                    directions = _extract_directions_from_skeleton(nested.get("skeleton_plan"))
-
-        # Dedupe while preserving order
-        seen: set[str] = set()
-        deduped: list[str] = []
-        for d in directions:
-            key = d.casefold()
-            if key in seen:
-                continue
-            seen.add(key)
-            deduped.append(d)
-        directions = deduped[: self.max_directions]
-
-        if not directions:
-            intent = str(raw.get("intent", "")).strip()
-            if intent:
-                directions = [intent]
-            else:
-                kws = _coerce_string_list(raw.get("keywords"))
-                if kws:
-                    directions = [" ".join(kws[:12])]
-                else:
-                    fallback = (query_text or "").strip()
-                    directions = [fallback] if fallback else ["General retrieval"]
-
-        return {
-            "intent": str(raw.get("intent", "")).strip(),
-            "keywords": _coerce_string_list(raw.get("keywords")),
-            "constraints": _coerce_string_list(raw.get("constraints")),
-            "facets": _coerce_string_list(raw.get("facets")),
-            "notes": _coerce_notes(raw.get("notes")),
-            "directions": directions,
-            "raw": raw,
-        }
+            raw = self._chat_completion(messages, json_mode=True)
+            validated = Round2Response.model_validate_json(raw)
+            return QueryBranchResult(branch_id=branch_id, status="success", search_query=validated.search_query)
+        except (ValidationError, Exception) as exc:
+            return QueryBranchResult(branch_id=branch_id, status="invalid_output", error=str(exc))
