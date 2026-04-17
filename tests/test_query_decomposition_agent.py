@@ -1,6 +1,6 @@
 import requests
 
-from query_decomposition_agent import (
+from oversight.query_decomposition_agent import (
     QueryBranchResult,
     QueryDecompositionAgent,
 )

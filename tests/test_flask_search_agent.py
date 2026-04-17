@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from query_decomposition_agent import QueryBranchResult, QueryDecompositionRun
+from oversight.query_decomposition_agent import QueryBranchResult, QueryDecompositionRun
 
 
 try:

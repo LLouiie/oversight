@@ -6,13 +6,12 @@ from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-from agent_retrieval_merge import merge_linear_rag_agent_results
-from query_decomposition_agent import QueryDecompositionAgent
-from linear_rag_search import LinearRAGSearchEngine
-from reranker import BGEReranker
+from oversight.agent_retrieval_merge import merge_linear_rag_agent_results
+from oversight.linear_rag_search import LinearRAGSearchEngine
+from oversight.query_decomposition_agent import QueryDecompositionAgent
+from oversight.reranker import BGEReranker
 
-# Load environment variables early so repo/db can connect.
-# override=True ensures repo .env values replace stale inherited shell vars.
+# Load .env early; override=True replaces stale inherited shell variables.
 load_dotenv(override=True)
 
 app = Flask(__name__)
