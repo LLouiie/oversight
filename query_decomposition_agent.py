@@ -60,6 +60,69 @@ def _branch_id_for_index(index: int) -> str:
     return f"branch_{index}"
 
 
+def _equal_query_slices(query_text: str, target: int) -> list[str]:
+    """Split query into `target` roughly equal word spans for fallback directions."""
+    words = (query_text or "").split()
+    if not words:
+        return [query_text.strip() or "general"] * max(1, target)
+    k = len(words)
+    out: list[str] = []
+    for i in range(target):
+        a = (i * k) // target
+        b = ((i + 1) * k) // target
+        out.append(" ".join(words[a:b]))
+    return out
+
+
+def _align_direction_count(
+    directions: list[str],
+    expected_subtopics: int | None,
+    query_text: str,
+    max_directions: int,
+) -> list[str]:
+    if expected_subtopics is None:
+        return directions
+    try:
+        target = int(expected_subtopics)
+    except (TypeError, ValueError):
+        return directions
+    target = max(1, min(target, max_directions))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for d in directions:
+        if not isinstance(d, str):
+            continue
+        s = d.strip()
+        if not s:
+            continue
+        key = s.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(s)
+
+    if len(deduped) > target:
+        return deduped[:target]
+
+    if len(deduped) == target:
+        return deduped
+
+    slices = _equal_query_slices(query_text, target)
+    out: list[str] = []
+    for i in range(target):
+        if i < len(deduped):
+            out.append(deduped[i])
+        else:
+            if i < len(slices):
+                out.append(slices[i])
+            elif deduped:
+                out.append(deduped[-1])
+            else:
+                out.append(query_text.strip() or "general")
+    return out
+
+
 def _extract_directions_from_skeleton(plan: Any) -> list[str]:
     if not isinstance(plan, list):
         return []
@@ -205,7 +268,12 @@ class QueryDecompositionAgent:
     def from_env(cls) -> "QueryDecompositionAgent":
         return cls()
 
-    def decompose(self, query_text: str) -> QueryDecompositionRun:
+    def decompose(
+        self,
+        query_text: str,
+        *,
+        expected_subtopics: int | None = None,
+    ) -> QueryDecompositionRun:
         empty_branches: list[QueryBranchResult] = []
 
         if not self.enabled:
@@ -239,7 +307,10 @@ class QueryDecompositionAgent:
             )
 
         try:
-            round1_output = self._run_round1(query_text)
+            round1_output = self._run_round1(
+                query_text,
+                expected_subtopics=expected_subtopics,
+            )
         except Exception as exc:
             return QueryDecompositionRun(
                 enabled=True,
@@ -313,7 +384,12 @@ class QueryDecompositionAgent:
             return "".join(parts)
         raise ValueError("Unsupported message content format from model")
 
-    def _run_round1(self, query_text: str) -> dict[str, Any]:
+    def _run_round1(
+        self,
+        query_text: str,
+        *,
+        expected_subtopics: int | None = None,
+    ) -> dict[str, Any]:
         messages = [
             {
                 "role": "system",
@@ -324,12 +400,19 @@ class QueryDecompositionAgent:
             },
             {
                 "role": "user",
-                "content": self._render_round1_prompt(query_text),
+                "content": self._render_round1_prompt(
+                    query_text,
+                    expected_subtopics=expected_subtopics,
+                ),
             },
         ]
         raw = self._chat_completion(messages)
         parsed = _extract_json_object(raw)
-        return self._normalize_round1_output(parsed, query_text)
+        return self._normalize_round1_output(
+            parsed,
+            query_text,
+            expected_subtopics=expected_subtopics,
+        )
 
     def _run_round2_parallel(
         self,
@@ -462,14 +545,37 @@ class QueryDecompositionAgent:
             error=None,
         )
 
-    def _render_round1_prompt(self, query_text: str) -> str:
+    def _render_round1_prompt(
+        self,
+        query_text: str,
+        *,
+        expected_subtopics: int | None = None,
+    ) -> str:
+        extra = ""
+        if expected_subtopics is not None:
+            try:
+                n = int(expected_subtopics)
+            except (TypeError, ValueError):
+                n = 0
+            if n >= 1:
+                cap = min(n, self.max_directions)
+                extra = (
+                    f"\n\nThe question bundles about {cap} distinct technical subtopics. "
+                    f"Produce exactly {cap} entries in `directions`—one focused retrieval angle per subtopic, "
+                    "with minimal overlap between directions.\n"
+                )
+        tail = (
+            f"{self.max_directions}; use fewer when the query is narrow)."
+        )
+        if extra:
+            tail = f"{self.max_directions}; when subtopic guidance is given above, follow that count exactly.)"
         return (
             f"{self.round1_prompt_template}\n\n"
             "User query:\n"
-            f"{query_text}\n\n"
+            f"{query_text}{extra}\n"
             "Your reply must be a single JSON object matching the keys and example shape in the instructions above "
             "(all keys required; `directions` must have at least one string, at most "
-            f"{self.max_directions}; use fewer when the query is narrow)."
+            f"{tail}"
         )
 
     def _render_round2_prompt(
@@ -496,7 +602,13 @@ class QueryDecompositionAgent:
             '`search_query` (string, non-empty). Example: {"search_query": "..."}'
         )
 
-    def _normalize_round1_output(self, raw: dict[str, Any], query_text: str) -> dict[str, Any]:
+    def _normalize_round1_output(
+        self,
+        raw: dict[str, Any],
+        query_text: str,
+        *,
+        expected_subtopics: int | None = None,
+    ) -> dict[str, Any]:
         # Keep a stable schema for downstream prompts even if the model returns extras.
         directions = _coerce_string_list(raw.get("directions"))
         if not directions:
@@ -531,9 +643,17 @@ class QueryDecompositionAgent:
                     fallback = (query_text or "").strip()
                     directions = [fallback] if fallback else ["General retrieval"]
 
+        keywords_list = _coerce_string_list(raw.get("keywords"))
+        directions = _align_direction_count(
+            directions,
+            expected_subtopics,
+            query_text,
+            self.max_directions,
+        )
+
         return {
             "intent": str(raw.get("intent", "")).strip(),
-            "keywords": _coerce_string_list(raw.get("keywords")),
+            "keywords": keywords_list,
             "constraints": _coerce_string_list(raw.get("constraints")),
             "facets": _coerce_string_list(raw.get("facets")),
             "notes": _coerce_notes(raw.get("notes")),

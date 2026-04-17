@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "description": "Recomputed from saved eval JSON (no retrieval).",
+    "splits": {
+      "n0": {
+        "output_file": "n0_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.6,
+        "mean_ndcg_at_k": 0.512392624554552,
+        "median_ndcg_at_k": 0.6309297535714575
+      },
+      "n1": {
+        "output_file": "n1_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.13,
+        "mean_ndcg_at_k": 0.12382104638346034,
+        "median_ndcg_at_k": 0.0
+      },
+      "n2": {
+        "output_file": "n2_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.09333333333333332,
+        "mean_ndcg_at_k": 0.10506042479924467,
+        "median_ndcg_at_k": 0.0
+      }
+    },
+    "overall": {
+      "total_queries": 150,
+      "mean_recall_at_k": 0.2744444444444445,
+      "mean_ndcg_at_k": 0.24709136524575243,
+      "median_recall_at_k": 0.0,
+      "median_ndcg_at_k": 0.0
+    }
+  }
+}

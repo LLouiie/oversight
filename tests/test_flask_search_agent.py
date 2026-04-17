@@ -44,7 +44,7 @@ class FakeSearchEngine:
 class DisabledAgent:
     debug = False
 
-    def decompose(self, query_text):
+    def decompose(self, query_text, **kwargs):
         return QueryDecompositionRun(
             enabled=False,
             round1_status="skipped",
@@ -58,7 +58,7 @@ class DisabledAgent:
 class GroupedAgent:
     debug = True
 
-    def decompose(self, query_text):
+    def decompose(self, query_text, **kwargs):
         return QueryDecompositionRun(
             enabled=True,
             round1_status="success",

@@ -18,7 +18,7 @@ def test_decompose_round1_success_round2_all_success(monkeypatch):
     monkeypatch.setattr(
         agent,
         "_run_round1",
-        lambda query_text: {
+        lambda query_text, expected_subtopics=None: {
             "intent": "test intent",
             "keywords": ["alpha"],
             "constraints": [],
@@ -55,7 +55,18 @@ def test_decompose_partial_success(monkeypatch):
     )
 
     monkeypatch.setattr(agent, "_prompts_configured", lambda: True)
-    monkeypatch.setattr(agent, "_run_round1", lambda query_text: {"intent": "x", "keywords": [], "constraints": [], "facets": [], "notes": [], "raw": {}})
+    monkeypatch.setattr(
+        agent,
+        "_run_round1",
+        lambda query_text, expected_subtopics=None: {
+            "intent": "x",
+            "keywords": [],
+            "constraints": [],
+            "facets": [],
+            "notes": [],
+            "raw": {},
+        },
+    )
     monkeypatch.setattr(
         agent,
         "_run_round2_parallel",

@@ -6,6 +6,7 @@ from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 
+from agent_retrieval_merge import merge_linear_rag_agent_results
 from query_decomposition_agent import QueryDecompositionAgent
 from linear_rag_search import LinearRAGSearchEngine
 from PaperDatabase import PaperDatabase
@@ -119,19 +120,6 @@ def _paper_to_api_dict(p: Any) -> dict[str, Any]:
     }
 
 
-def _dedupe_flat_results(query_groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen_paper_ids: set[str] = set()
-    flattened: list[dict[str, Any]] = []
-    for group in query_groups:
-        for paper in group.get("results", []) or []:
-            paper_id = str(paper.get("paper_id", ""))
-            if not paper_id or paper_id in seen_paper_ids:
-                continue
-            seen_paper_ids.add(paper_id)
-            flattened.append(paper)
-    return flattened
-
-
 @app.post("/api/search")
 @app.get("/api/search")
 def search() -> tuple[dict, int]:
@@ -187,10 +175,19 @@ def search() -> tuple[dict, int]:
     # Check if reranking is requested by the client (defaults to false if not specified)
     rerank_requested = body.get("rerank", False)
     rerank_max_input_param = body.get("rerank_max_input")
-    
+
+    expected_subtopics_raw = body.get("expected_subtopics")
+    expected_subtopics: int | None = None
+    if expected_subtopics_raw is not None and str(expected_subtopics_raw).strip() != "":
+        try:
+            expected_subtopics = int(expected_subtopics_raw)
+            expected_subtopics = max(1, min(100, expected_subtopics))
+        except (TypeError, ValueError):
+            expected_subtopics = None
+
     search_engine = _get_search_engine()
     agent = QueryDecompositionAgent.from_env()
-    agent_run = agent.decompose(query_text)
+    agent_run = agent.decompose(query_text, expected_subtopics=expected_subtopics)
     query_timedelta = timedelta(days=time_window_days_int)
 
     # If the agent is disabled/unconfigured, preserve legacy single-query search behavior.
@@ -257,22 +254,21 @@ def search() -> tuple[dict, int]:
             "agent": agent_run.agent_meta(include_debug=agent.debug),
         }, 502
 
-    results = _dedupe_flat_results(query_groups)
-    
-    # Post-process: Re-rank results if requested by the client and the reranker is available
     reranker = _get_reranker()
-    if reranker and results and rerank_requested:
-        # Re-rank against the original user query for global semantic relevance
-        reranked_top_k = int(os.getenv("OVERSIGHT_RERANK_TOP_K", str(limit_int)))
-        # Use provided param, else fallback to env/default
-        max_rerank_input = int(rerank_max_input_param) if rerank_max_input_param is not None else int(os.getenv("OVERSIGHT_RERANK_MAX_INPUT", "60"))
-        
-        to_rerank = results[:max_rerank_input]
-        others = results[max_rerank_input:]
-        
-        reranked = reranker.rerank(query=query_text, papers=to_rerank, top_k=reranked_top_k)
-        # Combine reranked results with the rest (if top_k is large)
-        results = reranked + others[:max(0, limit_int - len(reranked))]
+    max_rerank_input = (
+        int(rerank_max_input_param)
+        if rerank_max_input_param is not None
+        else int(os.getenv("OVERSIGHT_RERANK_MAX_INPUT", "60"))
+    )
+    results = merge_linear_rag_agent_results(
+        query_groups,
+        original_query=query_text,
+        limit=limit_int,
+        reranker=reranker,
+        rerank_requested=bool(rerank_requested),
+        rerank_max_input=max_rerank_input,
+        expected_subtopics=expected_subtopics,
+    )
 
     return {
         "results": results,

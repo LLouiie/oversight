@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "description": "Pooled metrics over all queries in n0, n1, n2 (each query weighted equally).",
+    "k": 10,
+    "splits": {
+      "n0": {
+        "input_file": "sampled_multi_paper_entities_n0_output.json",
+        "output_file": "n0_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.92,
+        "mean_ndcg_at_k": 0.8738507213043262,
+        "median_ndcg_at_k": 1.0,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.82,
+            "mean_ndcg_at_k": 0.82
+          },
+          "3": {
+            "mean_recall_at_k": 0.9,
+            "mean_ndcg_at_k": 0.8652371901428583
+          },
+          "5": {
+            "mean_recall_at_k": 0.92,
+            "mean_ndcg_at_k": 0.8738507213043262
+          },
+          "10": {
+            "mean_recall_at_k": 0.92,
+            "mean_ndcg_at_k": 0.8738507213043262
+          }
+        }
+      },
+      "n1": {
+        "input_file": "sampled_multi_paper_entities_n1_output.json",
+        "output_file": "n1_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.65,
+        "mean_ndcg_at_k": 0.599568067568976,
+        "median_ndcg_at_k": 0.6131471927654584,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.32,
+            "mean_ndcg_at_k": 0.64
+          },
+          "3": {
+            "mean_recall_at_k": 0.54,
+            "mean_ndcg_at_k": 0.5497847648168019
+          },
+          "5": {
+            "mean_recall_at_k": 0.6,
+            "mean_ndcg_at_k": 0.5798607149373148
+          },
+          "10": {
+            "mean_recall_at_k": 0.65,
+            "mean_ndcg_at_k": 0.599568067568976
+          }
+        }
+      },
+      "n2": {
+        "input_file": "sampled_multi_paper_entities_n2_output.json",
+        "output_file": "n2_linear_rag_eval.json",
+        "num_queries": 50,
+        "mean_recall_at_k": 0.3600000000000001,
+        "mean_ndcg_at_k": 0.3358932915083145,
+        "median_ndcg_at_k": 0.45029562487888086,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.11999999999999997,
+            "mean_ndcg_at_k": 0.36
+          },
+          "3": {
+            "mean_recall_at_k": 0.26,
+            "mean_ndcg_at_k": 0.28346393630113775
+          },
+          "5": {
+            "mean_recall_at_k": 0.3133333333333333,
+            "mean_ndcg_at_k": 0.3141558674241698
+          },
+          "10": {
+            "mean_recall_at_k": 0.3600000000000001,
+            "mean_ndcg_at_k": 0.3358932915083145
+          }
+        }
+      }
+    },
+    "overall": {
+      "total_queries": 150,
+      "k": 10,
+      "mean_recall_at_k": 0.6433333333333334,
+      "mean_ndcg_at_k": 0.6031040267938717,
+      "median_recall_at_k": 0.6666666666666666,
+      "median_ndcg_at_k": 0.6131471927654584,
+      "metrics_by_k": {
+        "1": {
+          "mean_recall_at_k": 0.42000000000000026,
+          "mean_ndcg_at_k": 0.6066666666666667
+        },
+        "3": {
+          "mean_recall_at_k": 0.5666666666666663,
+          "mean_ndcg_at_k": 0.5661619637535988
+        },
+        "5": {
+          "mean_recall_at_k": 0.611111111111111,
+          "mean_ndcg_at_k": 0.5892891012219365
+        },
+        "10": {
+          "mean_recall_at_k": 0.6433333333333334,
+          "mean_ndcg_at_k": 0.6031040267938717
+        }
+      }
+    }
+  },
+  "run_metadata": {
+    "title_match_fuzzy": false,
+    "rerank": true,
+    "time_window_days": 18250
+  }
+}
