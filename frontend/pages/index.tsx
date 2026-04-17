@@ -39,9 +39,9 @@ type AgentMeta = {
 function branchLabel(branchId: string): string {
   const m = /^branch_(\d+)$/.exec(branchId);
   if (m) return `Direction ${Number(m[1]) + 1}`;
-  if (branchId === "branch_a") return "Branch A";
-  if (branchId === "branch_b") return "Branch B";
-  if (branchId === "branch_c") return "Branch C";
+  if (branchId === "branch_a") return "Direction 1";
+  if (branchId === "branch_b") return "Direction 2";
+  if (branchId === "branch_c") return "Direction 3";
   return branchId;
 }
 
@@ -111,7 +111,18 @@ function PaperCard({
             </h2>
             <div className="flex flex-wrap items-center gap-3 text-xs text-base-content/70 mb-3">
                <span className="badge badge-sm badge-outline font-medium">{p.source || 'Unknown'}</span>
-               {p.paper_date && <span>{new Date(p.paper_date).toLocaleDateString()}</span>}
+              {p.paper_date && (
+                <span>
+                  {(() => {
+                    const d = new Date(p.paper_date);
+                    if (Number.isNaN(d.getTime())) return p.paper_date;
+                    const day = String(d.getDate()).padStart(2, "0");
+                    const month = String(d.getMonth() + 1).padStart(2, "0");
+                    const year = d.getFullYear();
+                    return `${day}/${month}/${year}`;
+                  })()}
+                </span>
+              )}
               {firstAuthorName && (
                 <>
                   <span className="badge badge-sm badge-outline font-medium">First Author</span>
@@ -220,11 +231,9 @@ export default function HomePage() {
   });
 
   const [showCustomRange, setShowCustomRange] = useState(false);
-  const [rerankEnabled, setRerankEnabled] = useState(false);
-  const [rerankMaxInput, setRerankMaxInput] = useState(60);
-  const [viewMode, setViewMode] = useState<"subquery" | "rerank">("subquery");
-
-  const [limit, setLimit] = useState<number | 'all' | ''>('all');
+  const [rerankEnabled, setRerankEnabled] = useState(true);
+  const [viewMode, setViewMode] = useState<"subquery" | "rerank">("rerank");
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [sources, setSources] = useState({
     arxiv: true,
     // AI conferences
@@ -245,6 +254,7 @@ export default function HomePage() {
   const lastRequestIdRef = useRef<number>(0);
   const activeRequestControllerRef = useRef<AbortController | null>(null);
   const hasSearchedRef = useRef(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Paper[]>([]);
   const [queryGroups, setQueryGroups] = useState<QueryGroupResult[] | null>(null);
@@ -253,10 +263,13 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState<"relevance" | "date">("relevance");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
+  const [subqueryPage, setSubqueryPage] = useState(1);
   const itemsPerPage = 10;
+  const requestLimit = 100;
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -275,7 +288,11 @@ export default function HomePage() {
   // Reset pagination when search changes
   useEffect(() => {
       setCurrentPage(1);
-  }, [text, lookbackOption, limit, sortBy, sortDirection]);
+  }, [text, lookbackOption, sortBy, sortDirection]);
+
+  useEffect(() => {
+    setSubqueryPage(1);
+  }, [selectedBranchId, queryGroups]);
 
   // Trigger search when time range or sources changes
   useEffect(() => {
@@ -312,6 +329,24 @@ export default function HomePage() {
     () => Array.isArray(queryGroups) && queryGroups.some((g) => (g.results?.length ?? 0) > 0),
     [queryGroups]
   );
+  const activeQueryGroup = useMemo(() => {
+    if (!Array.isArray(queryGroups) || queryGroups.length === 0) return null;
+    if (selectedBranchId) {
+      const matched = queryGroups.find((g) => g.branch_id === selectedBranchId);
+      if (matched) return matched;
+    }
+    return queryGroups[0];
+  }, [queryGroups, selectedBranchId]);
+
+  useEffect(() => {
+    if (!Array.isArray(queryGroups) || queryGroups.length === 0) {
+      setSelectedBranchId(null);
+      return;
+    }
+    if (!selectedBranchId || !queryGroups.some((g) => g.branch_id === selectedBranchId)) {
+      setSelectedBranchId(queryGroups[0].branch_id);
+    }
+  }, [queryGroups, selectedBranchId]);
 
   const isAllAISelected = aiConferences.every(conf => sources[conf as keyof typeof sources]);
   const isAllSystemsSelected = systemsConferences.every(conf => sources[conf as keyof typeof sources]);
@@ -347,6 +382,7 @@ export default function HomePage() {
     setLoading(true);
     setResults([]);
     hasSearchedRef.current = true;
+    setHasSearched(true);
 
     // Keep only one in-flight search request to avoid stale-response races.
     activeRequestControllerRef.current?.abort();
@@ -363,12 +399,7 @@ export default function HomePage() {
       text: queryText,
       sources,
       rerank: rerankEnabled,
-      rerank_max_input: rerankMaxInput,
-      limit: (() => {
-        if (typeof limit === "number" && Number.isFinite(limit) && limit > 0) return Math.max(1, Math.min(100, limit));
-        if (limit === "") return 10;
-        return 100;
-      })(),
+      limit: requestLimit,
     };
 
     if (lookbackOption === "custom") {
@@ -424,6 +455,7 @@ export default function HomePage() {
       }
 
       if (lastRequestIdRef.current !== reqId) return;
+      setViewMode("rerank");
 
       const directResults: Paper[] = Array.isArray(data.results) ? data.results : [];
 
@@ -490,6 +522,15 @@ export default function HomePage() {
         <header className="border-b border-base-300 bg-base-200/50 backdrop-blur sticky top-0 z-50">
           <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between px-6 py-3">
             <div className="flex items-center gap-3">
+              <button
+                className="btn btn-sm btn-ghost btn-circle"
+                onClick={() => setFiltersOpen((v) => !v)}
+                title={filtersOpen ? "Hide filters" : "Show filters"}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5m-13.5 5.25h10.5m-7.5 5.25h4.5" />
+                </svg>
+              </button>
               <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-content font-bold">
                 O
               </div>
@@ -515,169 +556,149 @@ export default function HomePage() {
         </header>
 
         {/* Main Layout */}
-        <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-6 px-6 pt-6 md:grid-cols-[300px,1fr]">
-          
-          {/* Sidebar */}
-          <aside className="flex flex-col gap-6 pr-2">
-            
-            {/* Filters */}
-            <div className="rounded-xl bg-base-200 p-4 shadow-sm">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">Time Range</h3>
-              
-              <div className="mt-2">
-                <div className="flex flex-wrap gap-2">
-                  {[
+        <div className="relative mx-auto w-full max-w-[1600px]">
+          {filtersOpen && (
+            <button
+              type="button"
+              aria-label="Close filters"
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[1px]"
+              onClick={() => setFiltersOpen(false)}
+            />
+          )}
+
+          <aside
+            className={`fixed left-0 top-0 z-50 h-screen w-[320px] transform overflow-y-auto border-r border-base-300 bg-base-100 p-4 pt-20 shadow-2xl transition-transform duration-200 ${
+              filtersOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wider opacity-70">Filters</h2>
+              <button className="btn btn-ghost btn-xs" onClick={() => setFiltersOpen(false)}>Close</button>
+            </div>
+
+            <div className="flex flex-col gap-4 pb-6">
+              <div className="rounded-xl bg-base-200 p-4 shadow-sm">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider opacity-70">Time Range</h3>
+                <div className="mt-2">
+                  <div className="flex flex-wrap gap-2">
+                    {[
                       { id: 'any', label: 'Any time' },
                       { id: 'pastYear', label: 'Past year' },
                       { id: 'pastMonth', label: 'Past month' },
                       { id: 'pastWeek', label: 'Past 7 days' },
-                  ].map((opt) => (
+                    ].map((opt) => (
                       <button
-                          key={opt.id}
-                          className={`btn btn-sm rounded-full normal-case font-medium ${lookbackOption === opt.id ? 'btn-primary' : 'btn-ghost bg-base-200/50 hover:bg-base-300'}`}
-                          onClick={() => { setLookbackOption(opt.id as any); setShowCustomRange(false); }}
+                        key={opt.id}
+                        className={`btn btn-sm rounded-full normal-case font-medium ${lookbackOption === opt.id ? 'btn-primary' : 'btn-ghost bg-base-200/50 hover:bg-base-300'}`}
+                        onClick={() => { setLookbackOption(opt.id as any); setShowCustomRange(false); }}
                       >
-                          {opt.label}
+                        {opt.label}
                       </button>
-                  ))}
+                    ))}
 
-                  <div 
-                    className="relative inline-block"
-                    onMouseEnter={() => {
-                        setLookbackOption('custom'); 
-                        setShowCustomRange(true); 
-                    }}
-                    onMouseLeave={() => {
-                        setShowCustomRange(false);
-                    }}
-                  >
-                    <button
+                    <div className="relative inline-block" onMouseLeave={() => { setShowCustomRange(false); }}>
+                      <button
                         className={`btn btn-sm rounded-full normal-case font-medium ${lookbackOption === 'custom' ? 'btn-primary' : 'btn-ghost bg-base-200/50 hover:bg-base-300'}`}
-                        // Remove onClick toggle since hover handles it, but keep for click support
                         onClick={() => { setLookbackOption('custom'); setShowCustomRange(true); }}
-                    >
+                      >
                         Custom range
-                    </button>
-                    
-                    {showCustomRange && (
+                      </button>
+
+                      {showCustomRange && (
                         <div className="absolute top-full left-0 pt-2 z-50">
-                            <DateRangePicker 
-                                startDate={customStartDate} 
-                                endDate={customEndDate} 
-                                onChange={(start, end) => {
-                                    setCustomStartDate(start);
-                                    setCustomEndDate(end);
-                                }} 
-                            />
+                          <DateRangePicker
+                            startDate={customStartDate}
+                            endDate={customEndDate}
+                            onChange={(start, end) => {
+                              setCustomStartDate(start);
+                              setCustomEndDate(end);
+                            }}
+                          />
                         </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-
-            </div>
-
-            <div className="rounded-xl bg-base-200 p-4 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Settings</h3>
-              <div className="form-control">
-                <label className="flex cursor-pointer items-center justify-between py-1 hover:bg-base-300/50 p-1 rounded">
-                  <span className="text-sm font-medium">Semantic Rerank</span>
-                  <input 
-                    type="checkbox" 
-                    className="toggle toggle-primary toggle-sm" 
-                    checked={rerankEnabled} 
-                    onChange={() => setRerankEnabled(!rerankEnabled)} 
-                  />
-                </label>
-                {rerankEnabled && (
-                  <div className="mt-2 px-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-bold opacity-70">Rerank Depth</span>
-                      <span className="badge badge-primary badge-sm font-mono text-[10px]">{rerankMaxInput} papers</span>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="10" 
-                      max="200" 
-                      step="10" 
-                      value={rerankMaxInput} 
-                      onChange={(e) => setRerankMaxInput(parseInt(e.target.value))}
-                      className="range range-primary range-xs" 
+              <div className="rounded-xl bg-base-200 p-4 shadow-sm">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Settings</h3>
+                <div className="form-control">
+                  <label className="flex cursor-pointer items-center justify-between py-1 hover:bg-base-300/50 p-1 rounded">
+                    <span className="text-sm font-medium">Semantic Rerank</span>
+                    <input
+                      type="checkbox"
+                      className="toggle toggle-primary toggle-sm"
+                      checked={rerankEnabled}
+                      onChange={() => setRerankEnabled(!rerankEnabled)}
                     />
-                    <div className="flex justify-between text-[8px] opacity-40 px-1">
-                      <span>10</span>
-                      <span>100</span>
-                      <span>200</span>
-                    </div>
-                  </div>
-                )}
-                <p className="text-[10px] opacity-50 mt-1 leading-tight">
-                  Uses BGE-v2-m3 Cross-Encoder for deep semantic re-ranking (High VRAM usage).
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl bg-base-200 p-4 shadow-sm">
-              <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Sources</h3>
-              
-              <div className="space-y-3">
-                <label className="flex cursor-pointer items-center gap-3 rounded hover:bg-base-300/50 p-1">
-                  <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={sources.arxiv} onChange={() => toggleSource("arxiv")} />
-                  <span className="text-sm">arXiv</span>
-                </label>
-
-                <div className="divider my-1"></div>
-                
-                <div className="space-y-1">
-                  <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-primary" 
-                      checked={isAllAISelected}
-                      onChange={toggleAllAI}
-                    />
-                    <span className="text-sm">AI conferences</span>
                   </label>
-                  <div className="pl-6 space-y-1">
-                    {aiConferences.map(conf => (
-                      <label key={conf} className="flex cursor-pointer items-center gap-3 hover:bg-base-300/50 p-1 rounded">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-xs checkbox-primary"
-                          checked={sources[conf as keyof typeof sources]}
-                          onChange={() => toggleSource(conf as keyof typeof sources)}
-                        />
-                        <span className="text-sm opacity-80">{conf}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <p className="text-[10px] opacity-50 mt-1 leading-tight">
+                    Uses BGE-v2-m3 Cross-Encoder for deep semantic re-ranking (High VRAM usage).
+                  </p>
                 </div>
+              </div>
 
-                <div className="divider my-1"></div>
-
-                <div className="space-y-1">
-                  <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-primary" 
-                      checked={isAllSystemsSelected}
-                      onChange={toggleAllSystems}
-                    />
-                    <span className="text-sm">Systems conferences</span>
+              <div className="rounded-xl bg-base-200 p-4 shadow-sm">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider opacity-70">Sources</h3>
+                <div className="space-y-3">
+                  <label className="flex cursor-pointer items-center gap-3 rounded hover:bg-base-300/50 p-1">
+                    <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={sources.arxiv} onChange={() => toggleSource("arxiv")} />
+                    <span className="text-sm">arXiv</span>
                   </label>
-                  <div className="pl-6 space-y-1">
-                    {systemsConferences.map(conf => (
-                      <label key={conf} className="flex cursor-pointer items-center gap-3 hover:bg-base-300/50 p-1 rounded">
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-xs checkbox-primary"
-                          checked={sources[conf as keyof typeof sources]}
-                          onChange={() => toggleSource(conf as keyof typeof sources)}
-                        />
-                        <span className="text-sm opacity-80">{conf}</span>
-                      </label>
-                    ))}
+
+                  <div className="divider my-1"></div>
+
+                  <div className="space-y-1">
+                    <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-xs checkbox-primary"
+                        checked={isAllAISelected}
+                        onChange={toggleAllAI}
+                      />
+                      <span className="text-sm">AI conferences</span>
+                    </label>
+                    <div className="pl-6 space-y-1">
+                      {aiConferences.map(conf => (
+                        <label key={conf} className="flex cursor-pointer items-center gap-3 hover:bg-base-300/50 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-xs checkbox-primary"
+                            checked={sources[conf as keyof typeof sources]}
+                            onChange={() => toggleSource(conf as keyof typeof sources)}
+                          />
+                          <span className="text-sm opacity-80">{conf}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="divider my-1"></div>
+
+                  <div className="space-y-1">
+                    <label className="flex cursor-pointer items-center gap-3 py-1 hover:bg-base-300/50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-xs checkbox-primary"
+                        checked={isAllSystemsSelected}
+                        onChange={toggleAllSystems}
+                      />
+                      <span className="text-sm">Systems conferences</span>
+                    </label>
+                    <div className="pl-6 space-y-1">
+                      {systemsConferences.map(conf => (
+                        <label key={conf} className="flex cursor-pointer items-center gap-3 hover:bg-base-300/50 p-1 rounded">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-xs checkbox-primary"
+                            checked={sources[conf as keyof typeof sources]}
+                            onChange={() => toggleSource(conf as keyof typeof sources)}
+                          />
+                          <span className="text-sm opacity-80">{conf}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -685,10 +706,15 @@ export default function HomePage() {
           </aside>
 
           {/* Main Content */}
-          <main className="flex flex-col gap-4 overflow-hidden h-full">
+          <main className={`mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 ${hasSearched ? "pt-6" : "pt-28 min-h-[calc(100vh-120px)] justify-start"}`}>
             
             {/* Search Box Area */}
-            <div className="flex-none">
+            <div className={`flex-none ${hasSearched ? "" : "mt-28"}`}>
+              {!hasSearched && (
+                <div className="mb-6 text-center">
+                  <h2 className="text-3xl font-semibold tracking-tight">How can I help with your research today?</h2>
+                </div>
+              )}
               <div className="relative group">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-secondary/50 rounded-2xl opacity-20 group-hover:opacity-40 transition duration-500 blur-sm"></div>
                 <div className="relative bg-base-100 rounded-2xl overflow-hidden shadow-sm border border-base-200">
@@ -703,7 +729,7 @@ export default function HomePage() {
                         }
                       }}
                       placeholder="e.g. 'Efficient attention mechanisms for long sequences' or paste a paper abstract..."
-                      className="w-full bg-transparent text-base placeholder:opacity-40 focus:outline-none min-h-[120px] resize-none py-4 px-5"
+                      className={`w-full bg-transparent text-base placeholder:opacity-40 focus:outline-none resize-none py-4 px-5 ${hasSearched ? "min-h-[72px]" : "min-h-[120px]"}`}
                     />
                   </form>
                   
@@ -743,7 +769,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {(agentMeta !== null || queryGroups !== null) && (
+            {(agentMeta !== null || queryGroups !== null) && viewMode === "subquery" && (
               <div className="bg-base-200 border border-base-300 rounded-box flex-none p-4">
                 <div className="text-sm font-medium mb-3">Agent details</div>
                 <div className="text-sm">
@@ -758,24 +784,15 @@ export default function HomePage() {
                       ))}
                     </div>
                   )}
-                  <pre className="mt-1 max-h-72 overflow-auto rounded bg-base-100 p-3 text-xs border border-base-300/50">
-                    {JSON.stringify(agentMeta ?? { message: "No agent metadata returned for this request." }, null, 2)}
-                  </pre>
                 </div>
               </div>
             )}
 
             {/* Toolbar */}
-            {results.length > 0 && (
+            {hasSearched && (
               <div className="flex flex-none items-center justify-between px-1">
                 <div className="flex items-center gap-4">
                   <div className="tabs tabs-boxed bg-base-100 border border-base-300 h-8 p-0.5">
-                    <a 
-                      className={`tab tab-sm h-full rounded-md transition-all ${viewMode === 'subquery' ? 'tab-active !bg-primary !text-primary-content' : 'hover:bg-base-200'}`}
-                      onClick={() => setViewMode('subquery')}
-                    >
-                      Subqueries
-                    </a>
                     <a 
                       className={`tab tab-sm h-full rounded-md transition-all ${viewMode === 'rerank' ? 'tab-active !bg-primary !text-primary-content' : 'hover:bg-base-200'}`}
                       onClick={() => {
@@ -785,48 +802,19 @@ export default function HomePage() {
                     >
                       Reranked All
                     </a>
+                    <a 
+                      className={`tab tab-sm h-full rounded-md transition-all ${viewMode === 'subquery' ? 'tab-active !bg-primary !text-primary-content' : 'hover:bg-base-200'}`}
+                      onClick={() => setViewMode('subquery')}
+                    >
+                      Subqueries
+                    </a>
                   </div>
                   <span className="text-sm opacity-60">
-                    {(limit === 'all' || limit === '') ? results.length : Math.min(results.length, limit as number)} results found
+                    {results.length} results found
                   </span>
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  {/* Max Results Input */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-base-300 bg-base-100 hover:border-base-content/20 transition-colors h-8">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 opacity-70">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                      </svg>
-                      <span className="text-sm font-medium">Max Result:</span>
-            <input
-                type="text"
-                value={limit === 'all' ? 'All' : limit}
-                onChange={(e) => {
-                   let val = e.target.value;
-                   
-                   // Handle case where user types number while "All" is selected (e.g. "All1")
-                   if (limit === 'all' && val.toLowerCase().startsWith('all') && val.length > 3) {
-                       val = val.substring(3);
-                   }
-                   
-                   if (val === '') {
-                      setLimit('');
-                   } else if (val.toLowerCase() === 'all') {
-                      setLimit('all');
-                   } else {
-                      const num = parseInt(val);
-                      if (!isNaN(num) && num >= 0) {
-                          setLimit(num);
-                      } else if (limit === 'all') {
-                          // If user modifies "All" to something invalid (e.g. "Al"), clear it to allow typing
-                          setLimit('');
-                      }
-                   }
-                }}
-                className="w-10 bg-transparent text-sm font-medium focus:outline-none text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-                  </div>
-
                   {/* Custom Sort Pill Button */}
                   <div className="dropdown dropdown-end">
                     <label tabIndex={0} className="btn btn-sm btn-outline gap-2 rounded-full border-base-300 bg-base-100 hover:bg-base-200 hover:border-base-content/20 normal-case font-medium">
@@ -849,26 +837,41 @@ export default function HomePage() {
             {/* Results List */}
             <div className="flex-1 space-y-4 pr-2 pb-10">
               {viewMode === "subquery" && hasBranchResults && Array.isArray(queryGroups) ? (
-                <div className="space-y-6">
-                  {queryGroups.map((g) => {
-                    const papers = g.results || [];
-                    const topPapers = papers.slice(0, 10);
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {queryGroups.map((g) => (
+                      <button
+                        key={`branch-tab-${g.branch_id}`}
+                        type="button"
+                        onClick={() => {
+                          setSelectedBranchId(g.branch_id);
+                          setSubqueryPage(1);
+                        }}
+                        className={`btn btn-xs min-h-0 h-7 px-3 rounded-full normal-case ${
+                          activeQueryGroup?.branch_id === g.branch_id
+                            ? "btn-primary"
+                            : "btn-outline border-base-300 bg-base-100 hover:bg-base-200"
+                        }`}
+                      >
+                        {branchLabel(g.branch_id)}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeQueryGroup && (() => {
+                    const papers = activeQueryGroup.results || [];
+                    const subqueryTotalPages = Math.ceil(papers.length / itemsPerPage);
+                    const currentSubqueryPapers = papers.slice(
+                      (subqueryPage - 1) * itemsPerPage,
+                      subqueryPage * itemsPerPage
+                    );
                     return (
-                      <section key={g.branch_id} className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <span className="badge badge-primary">{branchLabel(g.branch_id)}</span>
-                          {g.status && (
-                            <span className={`badge ${g.status === "success" ? "badge-success" : g.status === "timeout" ? "badge-warning" : "badge-error"}`}>
-                              {g.status}
-                            </span>
-                          )}
-                          <span className="text-xs opacity-70">Top {topPapers.length} results</span>
-                        </div>
-                        {topPapers.length > 0 ? (
+                      <section key={activeQueryGroup.branch_id} className="space-y-3">
+                        {currentSubqueryPapers.length > 0 ? (
                           <div className="space-y-4">
-                            {topPapers.map((p) => (
+                            {currentSubqueryPapers.map((p) => (
                               <PaperCard
-                                key={`${g.branch_id}-${p.paper_id}`}
+                                key={`${activeQueryGroup.branch_id}-${p.paper_id}`}
                                 p={p}
                                 navigateToAbstract={navigateToAbstract}
                               />
@@ -877,14 +880,62 @@ export default function HomePage() {
                         ) : (
                           <div className="text-xs opacity-60">No papers for this branch.</div>
                         )}
+                        {papers.length > itemsPerPage && (
+                          <div className="flex justify-center items-center gap-2 mt-8 select-none">
+                            <button
+                              className="btn btn-sm btn-ghost gap-1"
+                              onClick={() => {
+                                setSubqueryPage((p) => Math.max(1, p - 1));
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              disabled={subqueryPage === 1}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                              </svg>
+                              Previous
+                            </button>
+
+                            <div className="flex items-center">
+                              {Array.from({ length: subqueryTotalPages }).map((_, i) => {
+                                const page = i + 1;
+                                return (
+                                  <button
+                                    key={`subquery-page-${page}`}
+                                    className={`btn btn-sm btn-ghost w-8 h-8 p-0 rounded-full font-medium ${subqueryPage === page ? "text-primary bg-primary/10" : "text-base-content/70"}`}
+                                    onClick={() => {
+                                      setSubqueryPage(page);
+                                      window.scrollTo({ top: 0, behavior: "smooth" });
+                                    }}
+                                  >
+                                    {page}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            <button
+                              className="btn btn-sm btn-ghost gap-1"
+                              onClick={() => {
+                                setSubqueryPage((p) => Math.min(subqueryTotalPages, p + 1));
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              disabled={subqueryPage === subqueryTotalPages}
+                            >
+                              Next
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </section>
                     );
-                  })}
+                  })()}
                 </div>
               ) : (() => {
-                  const limitedResults = limit === 'all' || limit === '' ? sortedResults : sortedResults.slice(0, limit as number);
-                  const totalPages = Math.ceil(limitedResults.length / itemsPerPage);
-                  const currentResults = limitedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+                  const totalPages = Math.ceil(sortedResults.length / itemsPerPage);
+                  const currentResults = sortedResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
                   
                   return (
                     <>
@@ -897,7 +948,7 @@ export default function HomePage() {
                         ))}
                         
                         {/* Pagination Controls */}
-                        {limitedResults.length > itemsPerPage && (
+                        {sortedResults.length > itemsPerPage && (
                             <div className="flex justify-center items-center gap-2 mt-8 select-none">
                                 <button 
                                     className="btn btn-sm btn-ghost gap-1"
@@ -952,7 +1003,7 @@ export default function HomePage() {
                   );
               })()}
 
-              {results.length === 0 && !loading && (
+              {hasSearched && results.length === 0 && !loading && (
                 <div className="flex h-full flex-col items-center justify-center text-center opacity-30 mt-20">
                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-16 h-16 mb-4">
                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />

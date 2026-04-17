@@ -119,6 +119,9 @@ def _paper_to_api_dict(p: Any) -> dict[str, Any]:
 @app.post("/api/search")
 @app.get("/api/search")
 def search() -> tuple[dict, int]:
+    subquery_branch_limit = 50
+    reranked_all_limit = 100
+
     body = request.get_json(silent=True) or {}
     # Support query params for GET as well
     if request.method == "GET" and not body:
@@ -193,7 +196,7 @@ def search() -> tuple[dict, int]:
                 query_text=query_text,
                 query_timedelta=query_timedelta,
                 selected_sources=selected_sources,
-                limit=limit_int,
+                limit=reranked_all_limit,
             )
         except Exception as exc:
             return {
@@ -232,7 +235,7 @@ def search() -> tuple[dict, int]:
                 query_text=branch.search_query,
                 query_timedelta=query_timedelta,
                 selected_sources=selected_sources,
-                limit=limit_int,
+                limit=subquery_branch_limit,
             )
             group_payload["results"] = [_paper_to_api_dict(p) for p in papers]
         except Exception as exc:
@@ -259,12 +262,13 @@ def search() -> tuple[dict, int]:
     results = merge_linear_rag_agent_results(
         query_groups,
         original_query=query_text,
-        limit=limit_int,
+        limit=reranked_all_limit,
         reranker=reranker,
         rerank_requested=bool(rerank_requested),
         rerank_max_input=max_rerank_input,
         expected_subtopics=expected_subtopics,
     )
+    results = results[:reranked_all_limit]
 
     return {
         "results": results,
