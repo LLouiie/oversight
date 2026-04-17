@@ -9,9 +9,6 @@ from dotenv import load_dotenv
 from agent_retrieval_merge import merge_linear_rag_agent_results
 from query_decomposition_agent import QueryDecompositionAgent
 from linear_rag_search import LinearRAGSearchEngine
-from PaperDatabase import PaperDatabase
-from ArXivRepository import ArXivRepository
-from ResearchListener import research_listener_group
 from reranker import BGEReranker
 
 # Load environment variables early so repo/db can connect.
@@ -275,77 +272,6 @@ def search() -> tuple[dict, int]:
         "query_groups": query_groups,
         "agent": agent_run.agent_meta(include_debug=agent.debug),
     }, 200
-
-
-@app.get("/api/author/papers")
-def author_papers() -> tuple[dict, int]:
-    author_name = (request.args.get("name") or "").strip()
-    if not author_name:
-        return {"error": "name is required"}, 400
-
-    limit = request.args.get("limit")
-    try:
-        limit_int = int(limit) if limit is not None else 100
-        limit_int = max(1, min(500, limit_int))
-    except Exception:
-        return {"error": "limit must be an integer between 1 and 500"}, 400
-
-    with PaperDatabase() as db:
-        rows = db.get_papers_by_author(author_name, limit=limit_int)
-
-    results = []
-    for paper_id, title, abstract, source, update_date, link in rows:
-        results.append({
-            "paper_id": paper_id,
-            "title": title,
-            "abstract": abstract,
-            "source": source,
-            "link": link,
-            "paper_date": update_date.isoformat() if hasattr(update_date, "isoformat") else str(update_date),
-        })
-
-    return {"author": author_name, "results": results}, 200
-
-
-@app.post("/api/sync")
-def sync() -> tuple[dict, int]:
-    """
-    Synchronize ArXiv repository by fetching new papers and embedding them.
-    This endpoint initializes an ArXivRepository and calls its sync method.
-    """
-    try:
-        with ArXivRepository(
-            embedding_model_name="models/gemini-embedding-001",
-            research_llm_model_name="google/gemini-2.5-flash",
-        ) as arxiv_repo:
-            arxiv_repo.sync()
-
-        return {"status": "success", "message": "ArXiv repository sync completed successfully"}, 200
-
-    except Exception as e:
-        app.logger.error(f"Error during ArXiv sync: {str(e)}")
-        return {"status": "error", "message": f"Sync failed: {str(e)}"}, 500
-
-
-@app.post("/api/digest")
-def digest() -> tuple[dict, int]:
-    """
-    Send email digest to research listener group without updating the repository.
-    This endpoint initializes an ArXivRepository and calls email_weekly_digest.
-    """
-    try:
-        with ArXivRepository(
-            embedding_model_name="models/gemini-embedding-001",
-            research_llm_model_name="google/gemini-2.5-flash",
-        ) as arxiv_repo:
-            arxiv_repo.email_weekly_digest(research_listener_group)
-
-        return {"status": "success", "message": "Email digest sent successfully"}, 200
-
-    except Exception as e:
-        app.logger.error(f"Error during digest email: {str(e)}")
-        return {"status": "error", "message": f"Digest email failed: {str(e)}"}, 500
-
 
 if __name__ == "__main__":
     # Pre-load models if enabled to avoid timeouts on first request

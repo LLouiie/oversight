@@ -32,8 +32,6 @@ RUN apt-get update && apt-get install -y \
 	libxslt1-dev \
 	# Compression library (required by various Python packages)
 	zlib1g-dev \
-	# PostgreSQL client library (required by psycopg package for database connections)
-	libpq-dev \
 	# Clean up apt cache to reduce image size
 	&& rm -rf /var/lib/apt/lists/*
 

@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 import uuid
 
-#缺失作者与机构信息，引用关系等
+# This model currently omits author, affiliation, and citation relationship data.
 class Paper:
     def __init__(
             self,

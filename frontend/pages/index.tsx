@@ -48,11 +48,9 @@ function branchLabel(branchId: string): string {
 function PaperCard({
   p,
   navigateToAbstract,
-  openAuthorPage,
 }: {
   p: Paper;
   navigateToAbstract: (paper: Paper) => void;
-  openAuthorPage: (authorName: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const abstractRef = useRef<HTMLParagraphElement | null>(null);
@@ -117,14 +115,12 @@ function PaperCard({
               {firstAuthorName && (
                 <>
                   <span className="badge badge-sm badge-outline font-medium">First Author</span>
-                  <button
-                    type="button"
-                    className="badge badge-sm badge-outline font-medium text-base-content/70 border-base-content/20 cursor-pointer hover:text-primary hover:border-primary/40 transition-colors"
-                    title={`Open a new tab for ${firstAuthorName}'s papers`}
-                    onClick={() => openAuthorPage(firstAuthorName)}
+                  <span
+                    className="badge badge-sm badge-outline font-medium text-base-content/70 border-base-content/20"
+                    title={firstAuthorName}
                   >
                     {firstAuthorName}
-                  </button>
+                  </span>
                 </>
               )}
                {affiliation && (
@@ -261,10 +257,6 @@ export default function HomePage() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  function openAuthorPage(authorName: string) {
-    const url = `/author/${encodeURIComponent(authorName)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -879,7 +871,6 @@ export default function HomePage() {
                                 key={`${g.branch_id}-${p.paper_id}`}
                                 p={p}
                                 navigateToAbstract={navigateToAbstract}
-                                openAuthorPage={openAuthorPage}
                               />
                             ))}
                           </div>
@@ -902,7 +893,6 @@ export default function HomePage() {
                               key={p.paper_id}
                               p={p}
                               navigateToAbstract={navigateToAbstract}
-                              openAuthorPage={openAuthorPage}
                             />
                         ))}
                         

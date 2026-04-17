@@ -248,10 +248,3 @@ export const MOCK_PAPERS: Paper[] = [
     citation_count: 11,
   },
 ];
-
-export function getMockPapersByFirstAuthor(authorName: string): Paper[] {
-  const normalized = authorName.trim().toLowerCase();
-  if (!normalized) return [];
-  return MOCK_PAPERS.filter((p) => (p.first_author || "").trim().toLowerCase() === normalized);
-}
-

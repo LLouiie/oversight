@@ -78,6 +78,7 @@ class GroupedAgent:
 def client(monkeypatch):
     fake_search_engine = FakeSearchEngine()
     monkeypatch.setattr(flask_app, "_get_search_engine", lambda: fake_search_engine)
+    monkeypatch.setattr(flask_app, "_get_reranker", lambda: None)
     return flask_app.app.test_client(), fake_search_engine
 
 
@@ -126,7 +127,7 @@ def test_search_returns_grouped_results_and_deduped_flat_results(monkeypatch, cl
     assert payload["query_groups"][0]["status"] == "success"
     assert payload["query_groups"][1]["status"] == "timeout"
     assert payload["query_groups"][2]["status"] == "success"
-    assert [p["paper_id"] for p in payload["results"]] == ["p1", "p2", "p3"]
+    assert [p["paper_id"] for p in payload["results"]] == ["p1", "p2"]
 
     queried_texts = [call["text"] for call in fake_search_engine.calls]
     assert queried_texts == ["qa", "qc"]

@@ -84,7 +84,12 @@ def merge_linear_rag_agent_results(
     except (TypeError, ValueError):
         n_sub = 0
 
-    use_multitopic = n_sub >= 2
+    successful_branch_count = sum(
+        1
+        for group in query_groups
+        if group.get("status") == "success" and (group.get("results") or [])
+    )
+    use_multitopic = n_sub >= 2 or successful_branch_count >= 2
 
     if use_multitopic:
         branch_lists: list[list[dict[str, Any]]] = []
@@ -111,7 +116,7 @@ def merge_linear_rag_agent_results(
 
     results = dedupe_flat_results(query_groups)
     if not rerank_requested or not reranker or not results:
-        # Match legacy API behavior: do not truncate the merged list when reranking is off.
+        # Match API behavior: do not truncate the merged list when reranking is off.
         return results
     to_rerank = results[:max_in]
     others = results[max_in:]

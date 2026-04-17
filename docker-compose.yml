@@ -1,19 +1,4 @@
 services:
-  oversight-postgres:
-    image: pgvector/pgvector:pg16
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=${POSTGRES_DB:-oversight}
-      - POSTGRES_USER=${POSTGRES_USER:-oversight}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-oversight123}
-    volumes:
-      - oversight-postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oversight} -d ${POSTGRES_DB:-oversight}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   oversight-backend:
     build:
       context: .
@@ -24,7 +9,6 @@ services:
     environment:
       - FLASK_PORT=5001
       - FLASK_ENV=production
-      - DATABASE_URL=postgresql://oversight:oversight123@oversight-postgres:5432/oversight
       - CORS_ORIGINS=http://localhost:3000,http://oversight-frontend:3000
       - QUERY_DECOMPOSITION_AGENT_MODE=${QUERY_DECOMPOSITION_AGENT_MODE}
       - LOCAL_AGENT_ENABLED=${LOCAL_AGENT_ENABLED}
@@ -41,9 +25,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    depends_on:
-      oversight-postgres:
-        condition: service_healthy
 
   oversight-frontend:
     build:
@@ -62,6 +43,3 @@ services:
 networks:
   default:
     name: oversight-network
-
-volumes:
-  oversight-postgres-data:
