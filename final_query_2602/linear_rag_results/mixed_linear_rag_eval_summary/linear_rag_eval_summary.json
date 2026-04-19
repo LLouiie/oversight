@@ -1,0 +1,123 @@
+{
+  "summary": {
+    "description": "Recomputed after replacing GT with (paper_names + top5_overlap_papers) by line-wise one-to-one alignment; empty GT skipped.",
+    "k": 10,
+    "splits": {
+      "n0": {
+        "output_file": "n0_linear_rag_eval.json",
+        "num_queries": 50,
+        "skipped_queries_empty_ground_truth": 0,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.43666666666666665,
+        "mean_ndcg_at_k": 0.4938866547509342,
+        "median_ndcg_at_k": 0.4262955930229806,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.27,
+            "mean_ndcg_at_k": 0.82
+          },
+          "3": {
+            "mean_recall_at_k": 0.33333333333333337,
+            "mean_ndcg_at_k": 0.5552816470041841
+          },
+          "5": {
+            "mean_recall_at_k": 0.4033333333333334,
+            "mean_ndcg_at_k": 0.5076451267712966
+          },
+          "10": {
+            "mean_recall_at_k": 0.43666666666666665,
+            "mean_ndcg_at_k": 0.4938866547509342
+          }
+        }
+      },
+      "n1": {
+        "output_file": "n1_linear_rag_eval.json",
+        "num_queries": 50,
+        "skipped_queries_empty_ground_truth": 0,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.3038571428571429,
+        "mean_ndcg_at_k": 0.37226507478408927,
+        "median_ndcg_at_k": 0.311337727756307,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.10557142857142857,
+            "mean_ndcg_at_k": 0.7
+          },
+          "3": {
+            "mean_recall_at_k": 0.20971428571428571,
+            "mean_ndcg_at_k": 0.5067052560261441
+          },
+          "5": {
+            "mean_recall_at_k": 0.24628571428571427,
+            "mean_ndcg_at_k": 0.40260867005997375
+          },
+          "10": {
+            "mean_recall_at_k": 0.3038571428571429,
+            "mean_ndcg_at_k": 0.37226507478408927
+          }
+        }
+      },
+      "n2": {
+        "output_file": "n2_linear_rag_eval.json",
+        "num_queries": 50,
+        "skipped_queries_empty_ground_truth": 0,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.16,
+        "mean_ndcg_at_k": 0.20387078175044748,
+        "median_ndcg_at_k": 0.2529427027676571,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.0475,
+            "mean_ndcg_at_k": 0.38
+          },
+          "3": {
+            "mean_recall_at_k": 0.1025,
+            "mean_ndcg_at_k": 0.29877114904091023
+          },
+          "5": {
+            "mean_recall_at_k": 0.13,
+            "mean_ndcg_at_k": 0.2465785582838901
+          },
+          "10": {
+            "mean_recall_at_k": 0.16,
+            "mean_ndcg_at_k": 0.20387078175044748
+          }
+        }
+      }
+    },
+    "overall": {
+      "total_queries": 150,
+      "k": 10,
+      "mean_recall_at_k": 0.3001746031746032,
+      "mean_ndcg_at_k": 0.3566741704284903,
+      "median_recall_at_k": 0.25,
+      "median_ndcg_at_k": 0.311337727756307,
+      "metrics_by_k": {
+        "1": {
+          "mean_recall_at_k": 0.14102380952380952,
+          "mean_ndcg_at_k": 0.6333333333333333
+        },
+        "3": {
+          "mean_recall_at_k": 0.21518253968253967,
+          "mean_ndcg_at_k": 0.45358601735707954
+        },
+        "5": {
+          "mean_recall_at_k": 0.25987301587301587,
+          "mean_ndcg_at_k": 0.3856107850383868
+        },
+        "10": {
+          "mean_recall_at_k": 0.3001746031746032,
+          "mean_ndcg_at_k": 0.3566741704284903
+        }
+      },
+      "skipped_queries_empty_ground_truth": 0,
+      "total_queries_before_skip": 150
+    }
+  },
+  "run_metadata": {
+    "title_match_fuzzy": false,
+    "ground_truth_source_dir": "/Users/yisijiu/Desktop/Final_output",
+    "output_dir": "/Users/yisijiu/Projects/oversight/final_query_2602/linear_rag_results/mixed_linear_rag_eval_summary",
+    "ground_truth_rule": "paper_names + top5_overlap_papers (deduplicated, order-preserving)"
+  }
+}

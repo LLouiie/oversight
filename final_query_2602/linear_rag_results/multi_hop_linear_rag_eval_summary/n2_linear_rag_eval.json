@@ -1,0 +1,1688 @@
+{
+  "summary": {
+    "split": "n2",
+    "k": 10,
+    "num_queries": 50,
+    "skipped_queries_empty_ground_truth": 0,
+    "total_queries_before_skip": 50,
+    "mean_recall_at_k": 0.04,
+    "median_recall_at_k": 0.0,
+    "mean_ndcg_at_k": 0.03060272806341543,
+    "median_ndcg_at_k": 0.0,
+    "ndcg_note": "Binary relevance; empty ground truth queries are skipped."
+  },
+  "queries": [
+    {
+      "query_id": 0,
+      "query": "Fundamental trade-offs between log-structured merge (LSM) tree designs and learned index structures in streaming state stores under high-throughput windowed workloads.",
+      "ground_truth_titles": [
+        "BACH: Bridging Adjacency List and CSR Format using LSM-Trees for HGTAP Workloads",
+        "KVell: the Design and Implementation of a Fast Persistent Key-Value Store",
+        "MatrixKV: Reducing Write Stalls and Write Amplification in LSM-tree Based KV Stores with Matrix Container in NVM",
+        "Memory-Mapped I/O on Steroids",
+        "Storage Systems are Distributed Systems (So Verify Them That Way!)"
+      ],
+      "abstract_ids": [
+        "d44ff89a-d1b8-4847-a248-41fc2cafede1",
+        "68d2b440-34a4-47c8-858e-023ba098f694",
+        "373eff20-11e4-4428-b68e-1348fd937ca7",
+        "d3bede4b-7a95-4d6e-9bcc-340243f57803",
+        "09b08435-6311-4bff-afb8-de7e5f74e6de",
+        "c281612b-5acf-4f12-9d49-37d2e93f6386",
+        "bc1d4ccf-28dc-4a3c-a17c-d2e2b4c36366",
+        "cc400d9e-19cb-4164-969b-ea255d05bfb1",
+        "ed254c8f-5e85-4479-9d6b-bfc115a30dc8",
+        "c405a9a2-f042-4f4d-8814-44a13c0e182d"
+      ],
+      "paper_names": [
+        "Differentiated Key-Value Storage Management for Balanced I/O Performance",
+        "A New Benchmark Harness for Systematic and Robust Evaluation of Streaming State Stores",
+        "From WiscKey to Bourbon: A Learned Index for Log-Structured Merge Trees",
+        "PinK: High-speed In-storage Key-value Store with Bounded Tails",
+        "LOFT: A Lock-free and Adaptive Learned Index with High Scalability for Dynamic Workloads",
+        "FlowKV: A Semantic-Aware Store for Large-Scale State Management of Stream Processing Engines",
+        "Are Joins over LSM-trees Ready: Take RocksDB as an Example",
+        "HotRAP: Hot Record Retention and Promotion for LSM-trees with Tiered Storage",
+        "Why Are Learned Indexes So Effective but Sometimes Ineffective?",
+        "Revisiting Secondary Indexing in LSM-based Storage Systems with Persistent Memory"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 1,
+      "query": "Fundamental trade-offs between trapless kernel probing mechanisms like Kprobes and capability-based thin kernel interfaces in enforcing intra-process sandboxing and control flow integrity for WebAssembly runtimes on minimal-footprint OSes such as Zephyr.",
+      "ground_truth_titles": [
+        "Hardening Hypervisors with Ombro",
+        "ASTERINAS: A Linux ABI-Compatible, Rust-Based Framekernel OS with a Small and Sound TCB",
+        "An Analysis of Performance Evolution of Linux's Core Operations",
+        "An Empirical Study of Rust-for-Linux: The Success, Dissatisfaction, and Compromise",
+        "Balancing Analysis Time and Bug Detection: Daily Development-friendly Bug Detection in Linux"
+      ],
+      "abstract_ids": [
+        "37042824-eceb-4dd2-a432-6d5a6cbc63dc",
+        "91ae3785-e290-4341-8363-87a07e44af37",
+        "68ed923e-d987-4481-85cc-94d9b4016427",
+        "e0242c13-842a-4f7c-9276-3d59f2ba531a",
+        "41b63383-30f6-427d-a29d-ea8f5e67ef4d",
+        "48f9a68f-da65-46bd-a339-dfcf4a39c7bc",
+        "f0f22c2a-1fe3-4a15-8807-9cb5a7eacce6",
+        "3fdb8283-bd6c-492b-a112-a9fd7d0ae188",
+        "8290ad30-409b-445a-a594-04a8eedc39a6",
+        "32568efa-c928-4944-a8e6-4b168283d795"
+      ],
+      "paper_names": [
+        "Fast (Trapless) Kernel Probes Everywhere",
+        "Empowering WebAssembly with Thin Kernel Interfaces",
+        "Segue & ColorGuard: Optimizing SFI Performance and Scalability on Modern Architectures",
+        "DLOS: Effective Static Detection of Deadlocks in OS Kernels",
+        "FaaSNet: Scalable and Fast Provisioning of Custom Serverless Container Runtimes at Alibaba Cloud Function Compute",
+        "Specification and verification in the field: Applying formal methods to BPF just-in-time compilers in the Linux kernel",
+        "AnyBlox: A Framework for Self-Decoding Datasets",
+        "Core slicing: closing the gap between leaky confidential VMs and bare-metal cloud",
+        "One Simple API Can Cause Hundreds of Bugs An Analysis of Refcounting Bugs in All Modern Linux Kernels",
+        "VEP: A Two-stage Verification Toolchain for Full eBPF Programmability"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 2,
+      "query": "Fundamental trade-offs between explicit congestion control protocols like XCP and implicit mechanisms such as BBR or CUBIC+CoDel in heterogeneous network environments including cellular links and Wi-Fi.",
+      "ground_truth_titles": [
+        "Config-Snob: Tuning for the Best Configurations of Networking Protocol Stack",
+        "High-throughput and Flexible Host Networking for Accelerated Computing",
+        "Sidekick: In-Network Assistance for Secure End-to-End Transport Protocols",
+        "oBBR: Optimize Retransmissions of BBR Flows on the Internet",
+        "A Generic Communication Scheduler for Distributed DNN Training Acceleration"
+      ],
+      "abstract_ids": [
+        "6458962c-a17c-48ba-9cd3-e2a1c4e1adba",
+        "785468fc-3971-4198-a576-71a5f59257c6",
+        "10e11b76-9db7-4a17-831d-e0d7b444be31",
+        "aa0e8a69-13b0-48d6-9d8a-a944b5680f6a",
+        "dc8cf65c-778b-47f6-947e-e155c0e44d78",
+        "e97e3d73-d612-4cc4-827e-52d77db57c0a",
+        "e5ff570f-06fc-469a-86dc-14b95c6122dd",
+        "61d8d338-b226-4d9c-b961-b18b5a5acdcd",
+        "9f346525-ea4d-4c03-bae3-84d978a3f912",
+        "696a0893-1e58-4c6e-83a3-0945da5b11d1"
+      ],
+      "paper_names": [
+        "ABC: A Simple Explicit Congestion Controller for Wireless Networks",
+        "Internet Connection Splitting: What’s Old is New Again",
+        "ETC: An Elastic Transmission Control Using End-to-End Available Bandwidth Perception",
+        "Towards provably performant congestion control",
+        "oBBR: Optimize Retransmissions of BBR Flows on the Internet",
+        "Introspective Congestion Control for Consistent High Performance",
+        "Achieving Fairness Generalizability for Learning-based Congestion Control with Jury",
+        "Breaking the Transience-Equilibrium Nexus: A New Approach to Datacenter Packet Transport",
+        "Re-architecting Congestion Management in Lossless Ethernet",
+        "AmphiLight: Direct Air-Water Communication with Laser Light"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.13120507751234178,
+      "matched_ground_truth_titles": [
+        "oBBR: Optimize Retransmissions of BBR Flows on the Internet"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 3,
+      "query": "Fundamental limits of heterogeneous distributed compute devices in achieving optimal job completion time for hybrid parallel deep learning workloads under elastic resource-adaptive scheduling.",
+      "ground_truth_titles": [
+        "Sibylla: To Retry or Not To Retry on Deep Learning Job Failure",
+        "Concerto: Automatic Communication Optimization and Scheduling for Large-Scale Deep Learning",
+        "Dilu: Enabling GPU Resourcing-on-Demand for Serverless DL Serving via Introspective Elasticity",
+        "Transparent GPU Sharing in Container Clouds for Deep Learning Workloads",
+        "ARK: GPU-driven Code Execution for Distributed Deep Learning"
+      ],
+      "abstract_ids": [
+        "3db3c5ed-9db5-445c-925e-5e6b5596f640",
+        "013ee007-1c4a-4400-b40f-3ddbfbe2f0ea",
+        "0e159b3f-ede4-4f64-a858-a118bc258633",
+        "1a120997-db35-4323-ad99-34b9e2f80491",
+        "3caeac21-c405-48cd-a83c-bb17a4b06b21",
+        "0792b56c-8a13-4f6c-918a-ba5f13b21065",
+        "5cceb680-6df4-4b6f-a36a-da7e52a0f669",
+        "56ad79c6-776e-499d-a309-48db36a4d464",
+        "d5ab9601-a569-4e8e-8387-a23464b59e6a",
+        "61f4583e-de0c-4454-a269-04eae5ea9dc3"
+      ],
+      "paper_names": [
+        "Sol: Fast Distributed Computation Over Slow Networks",
+        "Elastic Resource Sharing for Distributed Deep Learning",
+        "Sia: Heterogeneity-aware, goodput-optimized ML-cluster scheduling",
+        "GPREEMPT: GPU Preemptive Scheduling Made General and Efficient",
+        "Pollux: Co-adaptive Cluster Scheduling for Goodput-Optimized Deep Learning",
+        "Blox: A Modular Toolkit for Deep Learning Schedulers",
+        "MLaaS in the Wild: Workload Analysis and Scheduling in Large-Scale Heterogeneous GPU Clusters",
+        "Concerto: Automatic Communication Optimization and Scheduling for Large-Scale Deep Learning",
+        "Lyra: Elastic Scheduling for Deep Learning Clusters",
+        "MAST: Global Scheduling of ML Training across Geo-Distributed Datacenters at Hyperscale"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.10699313236726378,
+      "matched_ground_truth_titles": [
+        "Concerto: Automatic Communication Optimization and Scheduling for Large-Scale Deep Learning"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 4,
+      "query": "\"Effectiveness of memory tagging and x86-64 segmentation in mitigating side-channel attacks within Intel SGX enclaves under SPEC CPU 2006 workloads.\"",
+      "ground_truth_titles": [
+        "Faasm: Lightweight Isolation for Efficient Stateful Serverless Computing",
+        "Accelerating Encrypted Deduplication via SGX",
+        "AlloyStack: A Library Operating System for Serverless Workflow Applications",
+        "AnyBlox: A Framework for Self-Decoding Datasets",
+        "Deterministic Client: Enforcing Determinism on Untrusted Machine Code"
+      ],
+      "abstract_ids": [
+        "15f5a666-3dc2-43e1-a04c-b368b324fa3f",
+        "68ed923e-d987-4481-85cc-94d9b4016427",
+        "951456d7-bba1-4556-8a93-2a2d55c8d5ab",
+        "e1de2738-f593-4804-8613-d0dd7929e51b",
+        "a7952bff-4b74-4eda-b2fc-d17d97d3578f",
+        "06feafd2-11f0-4239-94f9-5ea6f180fed1",
+        "56fdfa5f-9ba4-4c1e-90e2-3020a9b3be82",
+        "4bf24b16-878a-4cdb-8683-67082c968647",
+        "74b2fbfa-7a09-438f-a4c6-04f04c083aca",
+        "94de2695-2b60-42d9-b49a-e6dc71e79794"
+      ],
+      "paper_names": [
+        "MDPeek: Breaking Balanced Branches in SGX with Memory Disambiguation Unit Side Channels",
+        "Segue & ColorGuard: Optimizing SFI Performance and Scalability on Modern Architectures",
+        "PRIDWEN: Universally Hardening SGX Programs via Load-Time Synthesis",
+        "RAKIS: Secure Fast I/O Primitives Across Trust Boundaries on Intel SGX",
+        "An Extensible Orchestration and Protection Framework for Confidential Cloud Computing",
+        "Accelerating Encrypted Deduplication via SGX",
+        "ShieldReduce: Fine-Grained Shielded Data Reduction",
+        "Controlled Preemption: Amplifying Side-Channel Attacks from Userspace",
+        "Sharing is leaking: blocking transient-execution attacks with core-gapped confidential VMs",
+        "CoVA: Exploiting Compressed-Domain Analysis to Accelerate Video Analytics"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.1208113026994942,
+      "matched_ground_truth_titles": [
+        "Accelerating Encrypted Deduplication via SGX"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 5,
+      "query": "Fundamental trade-offs between IO operation granularity, crash-recoverable cache design, and replicated coherence protocols in low-latency persistent memory modules under POSIX-compliant distributed file systems.",
+      "ground_truth_titles": [
+        "LineFS: Efficient SmartNIC Offload of a Distributed File System with Pipeline Parallelism",
+        "rkt-io: A Direct I/O Stack for Shielded Execution",
+        "Skyloft: A General High-Efficient Scheduling Framework in User Space",
+        "SplitFS: Reducing Software Overhead in File Systems for Persistent Memory",
+        "ALPS: An Adaptive Learning, Priority OS Scheduler for Serverless Functions"
+      ],
+      "abstract_ids": [
+        "b776b97b-4ff2-42a6-bcc6-db2525e8aa8a",
+        "9a8f48eb-bfd8-4816-bd05-633c46ee37df",
+        "5eb2070e-4c35-4975-86bc-b35664211485",
+        "f957cadd-0744-47da-a355-98ac7ba720ca",
+        "16ab357d-45ff-43b2-a26f-40ead6adf0be",
+        "17a31650-07ac-4c09-9652-d59e04f60981",
+        "7407ee08-21fc-4ecc-9e1e-483a2f4f3265",
+        "c3ed3ee4-0e29-414d-be93-524dc3dcb69d",
+        "a417bfb0-4b26-4322-b5ad-3f7a037f5133",
+        "52277a85-c400-4663-aeea-62a8563de4dc"
+      ],
+      "paper_names": [
+        "Assise: Performance and Availability via Client-local NVM in a Distributed File System",
+        "Libnvmmio: Reconstructing Software IO Path with Failure-Atomic Memory-Mapped Interface",
+        "Persistent State Machines for Recoverable In-memory Storage Systems with NVRam",
+        "CtXnL: A Software-Hardware Co-Designed Solution for Efficient CXL-Based Transaction Processing",
+        "ODINFS: Scaling PM Performance with Opportunistic Delegation",
+        "Crash Consistency in Block-Level Caching Systems: An Open CAS Case Study",
+        "Odyssey: The Impact of Modern Hardware on Strongly-Consistent Replication Protocols",
+        "Morph: Efficient File-Lifetime Redundancy Management for Cluster File Systems",
+        "MapperX: Adaptive Metadata Maintenance for Fast Crash Recovery of DM-Cache Based Hybrid Storage Devices",
+        "TreeSLS: A Whole-system Persistent Microkernel with Tree-structured State Checkpoint on NVM"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 6,
+      "query": "Fundamental trade-offs between stability, fairness, and fast convergence in congestion control protocols for Low-power and Lossy Networks (LLNs) under IEEE 802.15.4 and CoAP.",
+      "ground_truth_titles": [
+        "Decouple and Decompose: Scaling Resource Allocation with DeDe",
+        "Solving Large-Scale Granular Resource Allocation Problems Efficiently with POP",
+        "The nanoPU: A Nanosecond Network Stack for Datacenters",
+        "A Cloud-Scale Characterization of Remote Procedure Calls",
+        "A Generic Communication Scheduler for Distributed DNN Training Acceleration"
+      ],
+      "abstract_ids": [
+        "8647a1cd-a597-43f5-9867-1aaa17dd9c4d",
+        "785468fc-3971-4198-a576-71a5f59257c6",
+        "5c58a845-a5ae-4cda-b757-b000abda6eb5",
+        "929142f3-c7ac-4abe-9d9e-8346347adb36",
+        "aa0e8a69-13b0-48d6-9d8a-a944b5680f6a",
+        "5fca8bd5-a565-4931-9922-8eff011aebeb",
+        "7a67fb0a-c2b4-4090-8baf-07d175736de9",
+        "6458962c-a17c-48ba-9cd3-e2a1c4e1adba",
+        "ee9b5ee4-318f-45e9-a708-aa826fd248c2",
+        "4786e342-51a8-42da-803e-9a705f09bac9"
+      ],
+      "paper_names": [
+        "Performant TCP for Low-Power Wireless Networks",
+        "Internet Connection Splitting: What’s Old is New Again",
+        "A large-scale deployment of DCTCP",
+        "A Linux Kernel Implementation of the Homa Transport Protocol",
+        "Towards provably performant congestion control",
+        "Pudica: Toward Near-Zero Queuing Delay in Congestion Control for Cloud Gaming",
+        "Config2Spec: Mining Network Specifications from Network Configurations",
+        "ABC: A Simple Explicit Congestion Controller for Wireless Networks",
+        "An edge-queued datagram service for all datacenter traffic",
+        "Backpressure Flow Control"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 7,
+      "query": "Fundamental limits of persistent memory-aware compilation: Can IR-level hashing (e.g., IRHash, cHash) and attribute-guided inlining strategies eliminate redundant computation in PMDK-based toolchains under nonvolatile memory constraints?",
+      "ground_truth_titles": [
+        "Disaggregating Persistent Memory and Controlling Them Remotely: An Exploration of Passive Disaggregated Key-Value Stores",
+        "P2CACHE: Exploring Tiered Memory for In-Kernel File Systems Caching",
+        "Pacman: An Efficient Compaction Approach for Log-Structured Key-Value Store on Persistent Memory",
+        "go-pmem: Native Support for Programming Persistent Memory in Go",
+        "Achieving Wire-Latency Storage Systems by Exploiting Hardware ACKs"
+      ],
+      "abstract_ids": [
+        "bcb9f76a-3a99-4e35-8d96-fe66841f81dd",
+        "c8e5179d-4122-45f2-ac9f-f3b1431e9d5e",
+        "3b12e8ed-67b9-447f-ae26-6f6f91166ad7",
+        "0581d52c-4d91-42ef-a733-f70b0d2510b2",
+        "7363fb78-c066-48eb-9e56-65d30fc3dcf7",
+        "c9e1d064-bb0a-48ce-86cc-e755fc04ef80",
+        "43d27061-ad4c-443c-83d5-a504005a26dc",
+        "8ffd284b-3b90-4659-b240-a3336c48b4e1",
+        "b423da96-1851-42ab-a6f0-20ca6c1e9e3a",
+        "930d4994-6b9e-434e-8c68-a65fc3a8a77d"
+      ],
+      "paper_names": [
+        "IRHash: Efficient Multi-Language Compiler Caching by IR-Level Hashing",
+        "Zhuque: Failure is Not an Option, it’s an Exception",
+        "Robustness Verification for Checking Crash Consistency of Non-volatile Memory",
+        "Lock-free Concurrent Level Hashing for Persistent Memory",
+        "SafePM: A Sanitizer for Persistent Memory",
+        "Ayudante: A Deep Reinforcement Learning Approach to Assist Persistent Memory Programming",
+        "SEPH: Scalable, Efficient, and Predictable Hashing on Persistent Memory",
+        "Witcher: Systematic Crash Consistency Testing for Non-Volatile Memory Key-Value Stores",
+        "Understanding and Dealing with Hard Faults in Persistent Memory Systems",
+        "Puddles: Application-Independent Recovery and Location-Independent Data for Persistent Memory"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 8,
+      "query": "Fundamental trade-offs between non-volatile memory (NVM) persistence guarantees and garbage collection efficiency in JVM-based big data analytics frameworks like Spark and Hadoop.",
+      "ground_truth_titles": [
+        "Ayudante: A Deep Reinforcement Learning Approach to Assist Persistent Memory Programming",
+        "DURINN: Adversarial Memory and Thread Interleaving for Detecting Durable Linearizability Bugs",
+        "Falcon: Fast OLTP Engine for Persistent Cache and Non-Volatile Memory",
+        "Investigating Managed Language Runtime Performance: Why JavaScript and Python are 8x and 29x slower than C++, yet Java and Go can be Faster?",
+        "Jade: A High-throughput Concurrent Copying Garbage Collector"
+      ],
+      "abstract_ids": [
+        "e92e21f6-7208-4f48-bdaa-9325442425d7",
+        "1e89f92d-91b7-4317-9494-a1db00c6f382",
+        "9ce51035-d3b5-436f-8c66-a02b11670168",
+        "e2530327-f877-4e1b-8750-ab7dea15ac38",
+        "2d59df88-4e0a-4c71-ba50-31b7985a8606",
+        "a1d1b465-6689-4d26-a64d-38b2336c1d40",
+        "179b4aaf-b6fd-46d5-aa11-20ba9245a580",
+        "2daf7bd5-326a-442b-8bb0-dae0e07eb0f1",
+        "5ebe7bc2-94cf-4832-92d0-112e5c4bfaab",
+        "e2fb480f-7489-4a8c-a400-84468d2a942f"
+      ],
+      "paper_names": [
+        "Characterizing and Optimizing Remote Persistent Memory with RDMA and NVM",
+        "Gerenuk: Thin Computation over Big Native Data Using Speculative Program Transformation",
+        "Bridging the Performance Gap for Copy-based Garbage Collectors atop Non-Volatile Memory",
+        "PACTree: A High Performance Persistent Range Index Using PAC Guidelines",
+        "RDPro: Distributed Processing of Big Raster Data",
+        "DURINN: Adversarial Memory and Thread Interleaving for Detecting Durable Linearizability Bugs",
+        "Honeycrisp: Large-scale Differentially Private Aggregation Without a Trusted Core",
+        "Vinter: Automatic Non-Volatile Memory Crash Consistency Testing for Full Systems",
+        "DShuffle: DPU-Optimized Shuffle Framework for Large-scale Data Processing",
+        "HeMem: Scalable Tiered Memory Management for Big Data Applications and Real NVM"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.1208113026994942,
+      "matched_ground_truth_titles": [
+        "DURINN: Adversarial Memory and Thread Interleaving for Detecting Durable Linearizability Bugs"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 9,
+      "query": "Trade-offs between function keep-alive policies and container-level concurrency information in serverless function container orchestration algorithms under burst computing conditions.",
+      "ground_truth_titles": [
+        "ALPS: An Adaptive Learning, Priority OS Scheduler for Serverless Functions",
+        "FaaSNet: Scalable and Fast Provisioning of Custom Serverless Container Runtimes at Alibaba Cloud Function Compute",
+        "FaaSnap: FaaS Made Fast Using Snapshot-based VMs",
+        "Faastlane: Accelerating Function-as-a-Service Workflows",
+        "Faster and Cheaper Serverless Computing on Harvested Resources"
+      ],
+      "abstract_ids": [
+        "cb2bbe57-d443-4c26-ba18-4e96cb277119",
+        "d97ce7fb-b349-49d8-86e3-a99df46f80fe",
+        "e09146cc-165a-4ad0-bd84-ed53d8891a24",
+        "0bb3b079-16c0-434f-9cbe-161f847674ab",
+        "019184e5-0140-419a-9ac8-66a776d8308f",
+        "423935b4-64c5-4854-b408-3bf9cf11f994",
+        "2dc28080-b0b7-436b-b7c1-9f5a73640671",
+        "9a69c7de-3d7f-474c-b210-8171aa2a2994",
+        "17a79f7c-2af3-479c-a4ae-e9ea3d7aca51",
+        "4ca0c50f-0dca-4f07-b986-30f0bd02a3fd"
+      ],
+      "paper_names": [
+        "Concurrency-Informed Orchestration for Serverless Functions",
+        "No Provisioned Concurrency: Fast RDMA-codesigned Remote Fork for Serverless Computing",
+        "Unifying Serverless and Microservice Workloads with SigmaOS",
+        "Burst Computing: Quick, Sudden, Massively Parallel Processing on Serverless Resources",
+        "RunD: A Lightweight Secure Container Runtime for High-density Deployment and High-concurrency Startup in Serverless Computing",
+        "Following the Data, Not the Function: Rethinking Function Orchestration in Serverless Computing",
+        "Dirigent: Lightweight Serverless Orchestration",
+        "Pronghorn: Effective Checkpoint Orchestration for Serverless Hot-Starts",
+        "Help Rather Than Recycle: Alleviating Cold Startup in Serverless Computing Through Inter-Function Container Sharing",
+        "Doing More with Less: Orchestrating Serverless Applications without an Orchestrator"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 10,
+      "query": "\"Efficiency and accuracy trade-offs of fine-grained mixed-precision quantization algorithms (e.g., W4A4KV4, W4A8) in low-precision LLM inference on hardware with INT4 tensor cores (e.g., A100-80G-SMX4), particularly in attention layers and KV cache management.\"",
+      "ground_truth_titles": [
+        "ChatTS: Aligning Time Series with LLMs via Synthetic Data for Enhanced Understanding and Reasoning",
+        "Accelerating Design Space Exploration for LLM Training Systems with Multi-experiment Parallel Simulation",
+        "Agent-OM: Leveraging LLM Agents for Ontology Matching",
+        "CEDAR: A System for Cost-Efficient Data-Driven Claim Verification",
+        "CEGS: Configuration Example Generalizing Synthesizer"
+      ],
+      "abstract_ids": [
+        "cf3da4c9-dc21-454f-aac2-f1a3c2ca58a7",
+        "ad6c5d28-8ff7-4a7b-85ae-bdfc67d4f210",
+        "4e4c6ce2-838e-41f9-b4a8-f9f5b52e3028",
+        "a01c12a0-4827-48db-9d3e-9549738173ed",
+        "78d6ec09-6105-4cd9-9547-79a86bca8020",
+        "dc62ae04-21b9-4a8c-aa8d-6a7038ab2df0",
+        "89b0fbb0-f65a-417a-9ca9-8ce415d10aa5",
+        "1ac1a2e4-2804-44a5-bde5-9d77d05f704d",
+        "530163f4-dfbb-4a6d-bc7f-7c2916f389a3",
+        "c5955a8e-35fc-4660-9ca3-423468ad00f5"
+      ],
+      "paper_names": [
+        "COMET: Towards Practical W4A4KV4 LLMs Serving",
+        "Q-Hitter: A Better Token Oracle for Efficient LLM Inference via Sparse-Quantized KV Cache",
+        "MVQ: Towards Efficient DNN Compression and Acceleration with Masked Vector Quantization",
+        "T-MAC: CPU Renaissance via Table Lookup for Low-Bit LLM Deployment on Edge",
+        "Prompt Cache: Modular Attention Reuse for Low-Latency Inference",
+        "Efficient Post-training Quantization with FP8 Formats",
+        "Quant-LLM: Accelerating the Serving of Large Language Models via FP6-Centric Algorithm-System Co-Design on Modern GPUs",
+        "InfiniGen: Efficient Generative Inference of Large Language Models with Dynamic KV Cache Management",
+        "DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization",
+        "Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 11,
+      "query": "Fundamental throughput and latency bottlenecks in 100Gbps linkspeed networks under multi-tenant multi-service edge cloud workloads with user-space TCP stacks (e.g., Intel DPDK) and hyper-converged gateway architectures.",
+      "ground_truth_titles": [
+        "A Generic Communication Scheduler for Distributed DNN Training Acceleration",
+        "A Linux Kernel Implementation of the Homa Transport Protocol",
+        "ACCL+: an FPGA-Based Collective Engine for Distributed Applications",
+        "Accelerating Neural Recommendation Training with Embedding Scheduling",
+        "Adapting TCP for Reconfigurable Datacenter Networks"
+      ],
+      "abstract_ids": [
+        "003a79fa-175c-4294-b020-d092b1c7d929",
+        "4e9fb37a-f18a-4815-991f-5a7a2ea4137b",
+        "33420845-d97e-42c1-a0a6-57a8f5286188",
+        "dfff6497-a284-4910-a4c6-2cb9a14b4c8d",
+        "4848f889-37c9-4ae4-8563-5bb71c88c2c2",
+        "8647a1cd-a597-43f5-9867-1aaa17dd9c4d",
+        "3b5a2572-8f0a-4948-8d37-cd6aabc57188",
+        "4dd63c91-5edf-40ba-b24e-b051d957034b",
+        "ab2b4071-3f54-47e4-98ca-98c15552e41e",
+        "b6773380-284c-4e73-8e70-8e26796febee"
+      ],
+      "paper_names": [
+        "LuoShen: A Hyper-Converged Programmable Gateway for Multi-Tenant Multi-Service Edge Clouds",
+        "Deploying User-space TCP at Cloud Scale with LUNA",
+        "Fine-Grained Isolation for Scalable, Dynamic, Multi-tenant Edge Clouds",
+        "TCP-Fuzz: Detecting Memory and Semantic Bugs in TCP Stacks with Fuzzing",
+        "More is Different: Prototyping and Analyzing a New Form of Edge Server with Massive Mobile SoCs",
+        "Performant TCP for Low-Power Wireless Networks",
+        "Sirius: Composing Network Function Chains into P4-Capable Edge Gateways",
+        "NetHint: White-Box Networking for Multi-Tenant Data Centers",
+        "AccelTCP: Accelerating Network Applications with Stateful TCP Offloading",
+        "Oakestra: A Lightweight Hierarchical Orchestration Framework for Edge Computing"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 12,
+      "query": "\"Performance and correctness trade-offs of inline journaling, selective flushing, and order-preserving transaction chaining in modern Linux file systems under high-concurrency workloads from databases like PostgreSQL and Redis.\"",
+      "ground_truth_titles": [
+        "Anarchy in the Database: A Survey and Evaluation of Database Management System Extensibility",
+        "Unikraft: Fast, Specialized Unikernels the Easy Way",
+        "An Analysis of Performance Evolution of Linux's Core Operations",
+        "Assise: Performance and Availability via Client-local NVM in a Distributed File System",
+        "Balancing Analysis Time and Bug Detection: Daily Development-friendly Bug Detection in Linux"
+      ],
+      "abstract_ids": [
+        "b4a12638-7cfc-42b0-98a9-3f28a63f5fa4",
+        "c1e0c862-cfea-4b30-8d11-322d7cc07393",
+        "84f2de86-7043-4abf-8e7f-6b3543aa4891",
+        "b87b03d2-cc79-4753-99d2-7f4b7ee26860",
+        "6f22d4ff-fa72-49bc-82f8-1fde65325d82",
+        "8b029efe-a02c-4ef6-af10-e8b7beec8c8e",
+        "1e3d09bc-f4d7-4b21-b02c-ab2534b21a2e",
+        "e73a88fb-5506-4d01-a89d-50e0c442d9b9",
+        "7dae14a8-5487-46fc-a5a8-1065115e143e",
+        "a89765d4-e9c4-45fd-b9a6-b15b14a57761"
+      ],
+      "paper_names": [
+        "BetrFS: A Compleat File System for Commodity SSDs",
+        "Grove: a Separation-Logic Library for Verifying Distributed Systems",
+        "Can Applications Recover from fsync Failures?",
+        "Z-LFS: A Zoned Namespace-tailored Log-structured File System for Commodity Small-zone ZNS SSDs",
+        "Max: A Multicore-Accelerated File System for Flash Storage",
+        "OPTIMUSCLOUD: Heterogeneous Configuration Optimization for Distributed Databases in the Cloud",
+        "Every Mapping Counts in Large Amounts: Folio Accounting",
+        "Optimizing Memory-mapped I/O for Fast Storage Devices",
+        "Using Dynamically Layered Definite Releases for Verifying the RefFS File System",
+        "LODIC: Logical Distributed Counting for Scalable File Access"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 13,
+      "query": "Impact of dataset-specific rules and refined metadata on the efficacy of data-centric machine learning pipelines in automated feature engineering and data cleaning.",
+      "ground_truth_titles": [
+        "AWQ: Activation-aware Weight Quantization for On-Device LLM Compression and Acceleration",
+        "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+        "PICACHU: Plug-In CGRA Handling Upcoming Nonlinear Operations in LLMs",
+        "A Demonstration of QueryArtisan: Real-Time Data Lake Analysis via Dynamically Generated Data Manipulation Code",
+        "A Tensor Compiler for Unified Machine Learning Prediction Serving"
+      ],
+      "abstract_ids": [
+        "9462810c-41fb-49cb-a328-233975d5b2ce",
+        "4fa42454-5adc-4f9b-84f6-19f73b58bb1a",
+        "352b8747-7617-42bc-94ed-8908f426c85c",
+        "e300f7da-302a-46b3-8069-f3f3e65f05cd",
+        "6af2d34a-433a-4bfb-b5a9-7daf2e3f9bf8",
+        "1b3e3824-1918-49de-926c-12dc18aa3901",
+        "aec608af-d000-420b-8031-be88d52693be",
+        "0a89c7c3-e4b1-41bc-8e4c-0874bfa930f9",
+        "ebf218a5-a758-4073-9ecb-33599150b68e",
+        "9dd55ca2-5356-4327-906f-41a36548082e"
+      ],
+      "paper_names": [
+        "CatDB: Data-catalog-guided, LLM-based Generation of Data-centric ML Pipelines",
+        "Magnus: A Holistic Approach to Data Management for Large-Scale Machine Learning Workloads",
+        "ML-Asset Management: Curation, Discovery, and Utilization",
+        "cedar: Optimized and Unified Machine Learning Input Data Pipelines",
+        "Datamap-Driven Tabular Coreset Selection for Classifier Training",
+        "OpenForge: Probabilistic Metadata Integration",
+        "WeShap: Weak Supervision Source Evaluation with Shapley Values",
+        "TSB-AutoAD: Towards Automated Solutions for Time-Series Anomaly Detection",
+        "Cheetah: Metadata Aggregation for Fast Object Storage without Distributed Ordering",
+        "APEX-DAG: Library and Language independent Pipeline EXtraction"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 14,
+      "query": "\"Performance and cost trade-offs of VM-level post-JIT snapshots versus transient virtual machines in serverless computing under adaptive resource management and distributed proactive autoscaling policies.\"",
+      "ground_truth_titles": [
+        "Nitro: Boosting Distributed Reinforcement Learning with Serverless Computing",
+        "CausalMesh: A Causal Cache for Stateful Serverless Computing",
+        "Decentralized and Stateful Serverless Computing on the Internet Computer Blockchain",
+        "Dilu: Enabling GPU Resourcing-on-Demand for Serverless DL Serving via Introspective Elasticity",
+        "Dorylus: Affordable, Scalable, and Accurate GNN Training with Distributed CPU Servers and Serverless Threads"
+      ],
+      "abstract_ids": [
+        "629f6360-3310-43ff-bc18-b6104e1b2a07",
+        "074a42ba-9626-4c4b-8bd1-57b3babb54f1",
+        "a273faf4-6ce4-4dcc-9221-a6b8bcff26a3",
+        "9feaf3f0-31b7-4aa0-9a31-5abcedafe7b8",
+        "35fdb257-d23e-40fb-af15-e26d65f7e9be",
+        "9a69c7de-3d7f-474c-b210-8171aa2a2994",
+        "be120375-773d-472d-83a0-ed1f95c93fd9",
+        "56e83d21-b2bb-459e-891a-1c8613aef42e",
+        "454623f9-2cf8-4ac2-88f9-efc13644e394",
+        "2159dedb-ba97-42c9-865a-bbc3613e6706"
+      ],
+      "paper_names": [
+        "Fireworks: A Fast, Efficient, and Safe Serverless Framework using VM-level post-JIT Snapshot",
+        "Faster and Cheaper Serverless Computing on Harvested Resources",
+        "BlitzScale: Fast and Live Large Model Autoscaling with O(1) Host Caching",
+        "Sabre: Hardware-Accelerated Snapshot Compression for Serverless MicroVMs",
+        "Harmonizing Efficiency and Practicability: Optimizing Resource Utilization in Serverless Computing with Jiagu",
+        "Pronghorn: Effective Checkpoint Orchestration for Serverless Hot-Starts",
+        "TrEnv: Transparently Share Serverless Execution Environments Across Different Functions and Nodes",
+        "ServerlessLLM: Low-Latency Serverless Inference for Large Language Models",
+        "With Great Freedom Comes Great Opportunity: Rethinking Resource Allocation for Serverless Functions",
+        "Decentralized and Stateful Serverless Computing on the Internet Computer Blockchain"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.09803928583135704,
+      "matched_ground_truth_titles": [
+        "Decentralized and Stateful Serverless Computing on the Internet Computer Blockchain"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 15,
+      "query": "Trade-offs between bi-directional delta compression and deduplication-aware encryption in hybrid inline and offline compression designs for vector databases under trusted execution environments.",
+      "ground_truth_titles": [
+        "Accelerating Encrypted Deduplication via SGX",
+        "Achieving Low-Latency Graph-Based Vector Search via Aligning Best-First Search Algorithm with SSD",
+        "Achilles: Efficient TEE-Assisted BFT Consensus via Rollback Resilient Recovery",
+        "Building a High-performance Fine-grained Deduplication Framework for Backup Storage with High Deduplication Ratio",
+        "Controlled Preemption: Amplifying Side-Channel Attacks from Userspace"
+      ],
+      "abstract_ids": [
+        "493ec8cb-b1bc-4b3f-9306-6f80200c50f6",
+        "56fdfa5f-9ba4-4c1e-90e2-3020a9b3be82",
+        "b851d8d0-dd92-4f5a-8ae8-54643a7b4db3",
+        "06d8e7d2-0a6d-4b60-8e11-dcbf3089ae22",
+        "c76d55b9-e685-45e3-81fd-5a65c7dd9ff0",
+        "253495c1-defe-44ad-9f78-0284795d81f9",
+        "25733644-4624-430b-8495-844802f2fb4a",
+        "06feafd2-11f0-4239-94f9-5ea6f180fed1",
+        "cfe727c3-0271-4e09-8148-0421f4dd46cc",
+        "0bfaec3a-9467-4107-bcdd-f482b5e6a4ac"
+      ],
+      "paper_names": [
+        "LoopDelta: Embedding Locality-aware Opportunistic Delta Compression in Inline Deduplication for Highly Efficient Data Reduction",
+        "ShieldReduce: Fine-Grained Shielded Data Reduction",
+        "HyperEnclave: An Open and Cross-platform Trusted Execution Environment",
+        "GaussDB-Vector: A Large-Scale Persistent Real-Time Vector Database for LLM Applications",
+        "Secure and Lightweight Deduplicated Storage via Shielded Deduplication-Before-Encryption",
+        "TensorTEE: Unifying Heterogeneous TEE Granularity for Efficient Secure Collaborative Tensor Computing",
+        "Not Small Enough? SegPQ: A Learned Approach to Compress Product Quantization Codebooks",
+        "Accelerating Encrypted Deduplication via SGX",
+        "FedVSE: A Privacy-Preserving and Efficient Vector Search Engine for Federated Databases",
+        "BigVectorBench: Heterogeneous Data Embedding and Compound Queries are Essential in Evaluating Vector Databases"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.10699313236726378,
+      "matched_ground_truth_titles": [
+        "Accelerating Encrypted Deduplication via SGX"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 16,
+      "query": "\"Systematic identification and mitigation of crash-recovery bugs in distributed ACID key-value stores through log-based static program analysis and fault-injection testing.\"",
+      "ground_truth_titles": [
+        "The Inflection Point Hypothesis: A Principled Debugging Approach for Locating the Root Cause of a Failure",
+        "CAFault: Enhance Fault Injection Technique in Practical Distributed Systems via Abundant Fault-Dependent Configurations.",
+        "Finding Heterogeneous-Unsafe Configuration Parameters in Cloud Systems",
+        "Understanding and Detecting Fail-Slow Hardware Failure Bugs in Cloud Systems",
+        "Anvil: Verifying Liveness of Cluster Management Controllers"
+      ],
+      "abstract_ids": [
+        "3ae31cb0-d8be-4c07-a11c-993c8957771a",
+        "68101ed0-595f-4116-9338-e41b5bacf02d",
+        "82ef6b5d-0560-4ae0-a8fe-57dfd8fd5c6b",
+        "4965cad0-b4de-41e7-bb89-966389d603b9",
+        "dfe7ac1e-308d-44a7-ba8d-a9c58f2e6406",
+        "eac76a2d-c60c-422a-9c0f-d554362ac84b",
+        "7512744d-e204-45fb-b51d-6cf06500507d",
+        "49225212-24b1-47b7-8eae-aacf9531b3f7",
+        "e07ebdff-e3b3-4c25-bece-a117fc4ac407",
+        "deb1fb24-98b9-4040-bdba-173c2506abed"
+      ],
+      "paper_names": [
+        "Basil: Breaking up BFT with ACID (transactions)",
+        "CrashTuner: Detecting Crash Recovery Bugs in Cloud Systems via Meta-info Analysis",
+        "Fucci: Database Transaction Fuzzing via Random Conflict Construction and Multilevel Constraint Solving",
+        "Distributed Transactions at Scale in Amazon DynamoDB",
+        "FDBKeeper: Enabling Scalable Coordination Services for Metadata Management using Distributed Key-Value Databases",
+        "Simulating a Transactional Server for Multi-Model Systems",
+        "Detecting Transactional Bugs in Database Engines via Graph-Based Oracle Construction",
+        "Tabular: Efficiently Building Efficient Indexes",
+        "Wolverine: Highly Efficient Monotonic Search Path Repair for Graph-based ANN Index Updates",
+        "mlidea: Interactively Improving ML Data Preparation Code via \"Shadow Pipelines\""
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 17,
+      "query": "Fundamental limits of deep learning-driven traffic engineering in software-defined wide-area networks under stochastic traffic demands and split-control architectures.",
+      "ground_truth_titles": [
+        "AutoSys: The Design and Operation of Learning-Augmented Systems",
+        "Alpa: Automating Inter- and Intra-Operator Parallelism for Distributed Deep Learning",
+        "Concerto: Automatic Communication Optimization and Scheduling for Large-Scale Deep Learning",
+        "Dilu: Enabling GPU Resourcing-on-Demand for Serverless DL Serving via Introspective Elasticity",
+        "OS2G: A High-Performance DPU Offloading Architecture for GPU-based Deep Learning with Object Storage"
+      ],
+      "abstract_ids": [
+        "53730642-bde9-4390-9ca0-63410b050fd8",
+        "5bd98900-8ddd-4066-8dec-22e6622258ca",
+        "40617934-4524-4686-ac43-aaf6f50d2eac",
+        "d856885a-b189-43e3-b29d-ea2d2a740ef4",
+        "04b1457c-c845-4913-bf63-84a55525d876",
+        "235e3f18-d06d-449e-b729-f7b62c1fcfc8",
+        "3ee12827-e9cf-4374-90f0-b6bce566d3d4",
+        "92248e85-88f6-44c5-9bc4-1798ad767db2",
+        "64740e3d-9063-4fa6-ac30-e264e5074932",
+        "e5ff570f-06fc-469a-86dc-14b95c6122dd"
+      ],
+      "paper_names": [
+        "DOTE: Rethinking (Predictive) WAN Traffic Engineering",
+        "OneWAN is better than two: Unifying a split WAN architecture",
+        "Brain-on-Switch: Towards Advanced Intelligent Network Data Plane via NN-Driven Traffic Analysis at Line-Speed",
+        "Decentralized cloud wide-area network traffic engineering with BLASTSHIELD",
+        "Solving Max-Min Fair Resource Allocations Quickly on Large Graphs",
+        "RackBlox: A Software-Defined Rack-Scale Storage System with Network-Storage Co-Design",
+        "GraphSparseNet: a Novel Method for Large Scale Traffic Flow Prediction",
+        "Precise Data Center Traffic Engineering with Constrained Hardware Resources",
+        "Orion: Google's Software-Defined Networking Control Plane",
+        "Achieving Fairness Generalizability for Learning-based Congestion Control with Jury"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 18,
+      "query": "Fundamental trade-offs between memory coherence protocols, ownership models, and reference counting in CXL-enabled distributed shared memory systems for graph database workloads.",
+      "ground_truth_titles": [
+        "ASTERINAS: A Linux ABI-Compatible, Rust-Based Framekernel OS with a Small and Sound TCB",
+        "AlloyStack: A Library Operating System for Serverless Workflow Applications",
+        "An Empirical Study of Rust-for-Linux: The Success, Dissatisfaction, and Compromise",
+        "Anvil: Verifying Liveness of Cluster Management Controllers",
+        "Beyond Compression: A Comprehensive Evaluation of Lossless Floating-Point Compression"
+      ],
+      "abstract_ids": [
+        "f3989df6-0599-4b73-b929-213e8efb749d",
+        "f957cadd-0744-47da-a355-98ac7ba720ca",
+        "91bb37af-fa13-4882-82ef-653e553c28f1",
+        "44557a02-a7f7-41f3-9bcc-6ab276ac6cfe",
+        "a88a82ef-64f4-4b2c-afe2-4c68223cf4ea",
+        "c3bb0869-5fff-4cbd-8913-19d5ac21713c",
+        "713bcb21-eb52-46cc-940f-c58f5a81e960",
+        "0896ca99-7240-4689-ae22-a15f83fc67cb",
+        "1e26eef6-7cfb-426f-bd0a-6783eeade1ea",
+        "48c8a653-99c2-4efe-991f-d771fe190ea0"
+      ],
+      "paper_names": [
+        "Partial Failure Resilient Memory Management System for (CXL-based) Distributed Shared Memory",
+        "CtXnL: A Software-Hardware Co-Designed Solution for Efficient CXL-Based Transaction Processing",
+        "Tigon: A Distributed Database for a CXL Pod",
+        "CXLfork: Fast Remote Fork over CXL Fabrics",
+        "M5: Mastering Page Migration and Memory Management for CXL-based Tiered Memory Systems",
+        "Direct Access, High-Performance Memory Disaggregation with DirectCXL",
+        "CXL Memory Performance for In-Memory Data Processing",
+        "CXL-ANNS: Software-Hardware Collaborative Memory Disaggregation and Computation for Billion-Scale Approximate Nearest Neighbor Search",
+        "Formalising CXL Cache Coherence",
+        "Systematic CXL Memory Characterization and Performance Analysis at Scale"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 19,
+      "query": "Fundamental trade-offs between hardware-assisted page migration and software-only transparent tiered memory management in multi-tiered systems combining DRAM, CXL-attached memory, and persistent storage-class memory.",
+      "ground_truth_titles": [
+        "Tiered Memory Management: Access Latency is the Key!",
+        "Ayudante: A Deep Reinforcement Learning Approach to Assist Persistent Memory Programming",
+        "Balancing Analysis Time and Bug Detection: Daily Development-friendly Bug Detection in Linux",
+        "BlackBox: A Container Security Monitor for Protecting Containers on Untrusted Operating Systems",
+        "Fast and Synchronous Crash Consistency with Metadata Write-Once File System"
+      ],
+      "abstract_ids": [
+        "a88a82ef-64f4-4b2c-afe2-4c68223cf4ea",
+        "a42c2b95-2736-4feb-aa7f-90a2ed141f12",
+        "c3bb0869-5fff-4cbd-8913-19d5ac21713c",
+        "d8811c54-28a8-4b99-8ad9-8c92f4aa7802",
+        "c63919b9-391a-4b50-b881-b28e0f8e9bdb",
+        "44557a02-a7f7-41f3-9bcc-6ab276ac6cfe",
+        "5eb2070e-4c35-4975-86bc-b35664211485",
+        "cf09b50a-1607-4d29-b246-1d207b39bb66",
+        "e2fb480f-7489-4a8c-a400-84468d2a942f",
+        "48c8a653-99c2-4efe-991f-d771fe190ea0"
+      ],
+      "paper_names": [
+        "M5: Mastering Page Migration and Memory Management for CXL-based Tiered Memory Systems",
+        "Nomad: Non-Exclusive Memory Tiering via Transactional Page Migration",
+        "Direct Access, High-Performance Memory Disaggregation with DirectCXL",
+        "First Responder: Persistent Memory Simultaneously as High Performance Buffer Cache and Storage",
+        "Managing Memory Tiers with CXL in Virtualized Environments",
+        "CXLfork: Fast Remote Fork over CXL Fabrics",
+        "Persistent State Machines for Recoverable In-memory Storage Systems with NVRam",
+        "Exploring Performance and Cost Optimization with ASIC-Based CXL Memory",
+        "HeMem: Scalable Tiered Memory Management for Big Data Applications and Real NVM",
+        "Systematic CXL Memory Characterization and Performance Analysis at Scale"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 20,
+      "query": "Trade-offs between edge caching strategies (e.g., Alluxio local cache on SSD) and centralized storage systems (e.g., HDFS) in low-latency OLAP workloads for feature rollout and app personalization in large-scale mobile platforms like Meta’s MobileConfig.",
+      "ground_truth_titles": [
+        "A Social Network Under Social Distancing: Risk-Driven Backbone Management During COVID-19 and Beyond",
+        "Accelerating LLM Serving for Multi-turn Dialogues with Efficient Resource Management",
+        "Achieving Low-Latency Graph-Based Vector Search via Aligning Best-First Search Algorithm with SSD",
+        "Adaptive Online Cache Capacity Optimization via Lightweight Working Set Size Estimation at Scale",
+        "Bladerunner: Stream Processing at Scale for a Live View of Backend Data Mutations at the Edge"
+      ],
+      "abstract_ids": [
+        "d612fc57-417f-4cb7-b294-29797971cece",
+        "6cef4107-0736-4077-9707-466743741b3b",
+        "eeb0d62b-289a-437c-88c2-d2ef39a62f6f",
+        "aeb3a429-a508-4133-9d9d-7ab37a8a9e77",
+        "12767836-614b-4e29-9f30-9546b16a1090",
+        "6c373939-47ce-4df7-83d2-922186f5a107",
+        "0ba14853-08fd-46b8-a6a1-7796a3d724e9",
+        "b776b97b-4ff2-42a6-bcc6-db2525e8aa8a",
+        "da88045d-4cdc-4e81-98dd-aa1c90ae36ca",
+        "b5db628a-1888-46be-afcf-ddb0369cc8e9"
+      ],
+      "paper_names": [
+        "Data Caching for Enterprise-Grade Petabyte-Scale OLAP",
+        "Achieving Wire-Latency Storage Systems by Exploiting Hardware ACKs",
+        "MobileConfig: Remote Configuration Management for Mobile Apps at Hyperscale",
+        "Adaptive Online Cache Capacity Optimization via Lightweight Working Set Size Estimation at Scale",
+        "Chardonnay: Fast and General Datacenter Transactions for On-Disk Databases",
+        "Defcon: Preventing Overload with Graceful Feature Degradation",
+        "Snap: a Microkernel Approach to Host Networking",
+        "Assise: Performance and Availability via Client-local NVM in a Distributed File System",
+        "Enabling Efficient Mobile Tracing with BTrace",
+        "Diagnosing Application-network Anomalies for Millions of IPs in Production Clouds"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.14606834984270645,
+      "matched_ground_truth_titles": [
+        "Adaptive Online Cache Capacity Optimization via Lightweight Working Set Size Estimation at Scale"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 21,
+      "query": "Impact of 3-bit and 4-bit quantization on activation outliers and residual matrix distortion in Llama-3-8B-Instruct and Gemma-2B during prefill phase on CPU versus NPU (e.g., llm.npu) with emphasis on GPU memory savings and latency reduction.",
+      "ground_truth_titles": [
+        "COMET: Towards Practical W4A4KV4 LLMs Serving",
+        "A Demonstration of QueryArtisan: Real-Time Data Lake Analysis via Dynamically Generated Data Manipulation Code",
+        "A Tensor Compiler for Unified Machine Learning Prediction Serving",
+        "ALERT: Accurate Learning for Energy and Timeliness",
+        "AssyLLM: Efficient Federated Fine-tuning of LLMs via Assembling Pre-trained Blocks"
+      ],
+      "abstract_ids": [
+        "530163f4-dfbb-4a6d-bc7f-7c2916f389a3",
+        "cf3da4c9-dc21-454f-aac2-f1a3c2ca58a7",
+        "332f0da5-889f-45e1-b5ce-a246fdb8e172",
+        "a078ced4-9f88-4ec6-b586-8378443f7d17",
+        "5ba92489-6a70-494f-bfa9-4090b69fe73f",
+        "996198cb-c62b-4515-9d87-37ca19884258",
+        "384e6fdb-1d1e-4a78-a904-cd1a76220707",
+        "b452d647-75e4-4725-8963-dd5032f65171",
+        "6ae55d3e-5e33-474b-a1f4-8e6c68dba997",
+        "5e8e7808-6a24-4f95-b756-8d10e9a866bd"
+      ],
+      "paper_names": [
+        "DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization",
+        "COMET: Towards Practical W4A4KV4 LLMs Serving",
+        "Fair Scheduling for AVX2 and AVX-512 Workloads",
+        "Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve",
+        "Atom: Low-Bit Quantization for Efficient and Accurate LLM Serving",
+        "Rearchitecting the TCP Stack for I/O-Offloaded Content Delivery",
+        "Memory Harvesting in Multi-GPU Systems with Hierarchical Unified Virtual Memory",
+        "AWQ: Activation-aware Weight Quantization for On-Device LLM Compression and Acceleration",
+        "Identifying On-/Off-CPU Bottlenecks Together with Blocked Samples",
+        "Aqua: Network-Accelerated Memory Offloading for LLMs in Scale-Up GPU Domains"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.21398626473452756,
+      "matched_ground_truth_titles": [
+        "COMET: Towards Practical W4A4KV4 LLMs Serving"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 22,
+      "query": "\"Semantics-preserving program transformations for collective execution of POSIX shell scripts on coarse-grained reconfigurable arrays using dataflow graph optimization and Unix-aware runtime primitives.\"",
+      "ground_truth_titles": [
+        "CFS: Scaling Metadata Service for Distributed File System via Pruned Scope of Critical Sections",
+        "Faasm: Lightweight Isolation for Efficient Stateful Serverless Computing",
+        "Finding Heterogeneous-Unsafe Configuration Parameters in Cloud Systems",
+        "Jiffy: Elastic Far-Memory for Stateful Serverless Analytics",
+        "Modernizing File System through In-Storage Indexing"
+      ],
+      "abstract_ids": [
+        "0294e7f5-3d87-4ff9-877a-e0e93132fac9",
+        "8a6f5cb2-7cd6-4f13-ad90-25763a9762b9",
+        "aa3f0137-0181-48e2-839a-ae90de61b5ea",
+        "d81f6d5d-f46b-4100-bbd4-7c1f4bd0b9a0",
+        "136dd866-50bf-4519-9649-e62315a30751",
+        "761b9214-949b-4248-ac5f-8b86b54ae134",
+        "0229ec33-95a2-4425-aec3-9e7406e0eb3f",
+        "2dd7d886-8596-4f4a-a750-4b0638572630",
+        "2bed3d1b-532c-48ab-a437-a92de9fd2401",
+        "9a1dc580-888f-4f9b-98d0-d86a964c2f83"
+      ],
+      "paper_names": [
+        "Pash: Light-touch Data-Parallel Shell Processing",
+        "Profiling Dataflow Systems on Multiple Abstraction Levels",
+        "The Koala Benchmarks for the Shell: Characterization and Implications",
+        "Enhancing CGRA Efficiency Through Aligned Compute and Communication Provisioning",
+        "Practically Correct, Just-in-Time Shell Script Parallelization",
+        "SPINFER: Inferring Semantic Patches for the Linux Kernel",
+        "PICACHU: Plug-In CGRA Handling Upcoming Nonlinear Operations in LLMs",
+        "DiSh: Dynamic Shell-Script Distribution",
+        "CrystalPerf: Learning to Characterize the Performance of Dataflow Computation through Code Analysis",
+        "Verified Programs Can Party: Optimizing Kernel Extensions via Post-Verification In-Kernel Merging"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 23,
+      "query": "Scalability and completeness trade-offs in model checking distributed protocols via ∃-free inductive invariant inference using SMT solvers.",
+      "ground_truth_titles": [
+        "Chardonnay: Fast and General Datacenter Transactions for On-Disk Databases",
+        "Sift: Using Refinement-guided Automation to Verify Complex Distributed Systems",
+        "A Layered Formal Methods Approach to Answering Queue-related Queries",
+        "Aegean: Replication Beyond the Client-Server Model",
+        "Bandle: Asynchronous State Machine Replication Made Efficient"
+      ],
+      "abstract_ids": [
+        "0086f323-d19c-4abd-a7a2-f09cecc7dc3b",
+        "fb37839a-1f5c-40bc-bcb5-90f095761e86",
+        "0f4a9327-4c5a-41fd-af37-3161462c16f1",
+        "4932f97e-b7e0-40a2-b45c-709bf99ebbcf",
+        "adc1fed0-d554-4114-b8aa-3c763a165103",
+        "34d6595e-5ccd-4ff9-ba52-3c4ee67c6769",
+        "0619b789-f8fb-4540-9cde-763c5787ca12",
+        "c77a4177-953c-4756-8323-3d9e5cd45e02",
+        "dcd43e6b-8ba1-4872-849c-0d5738e1212b",
+        "58bd2049-254b-4702-8de4-ffb1d4a27c46"
+      ],
+      "paper_names": [
+        "SandTable: Scalable Distributed System Model Checking with Specification-Level State Exploration",
+        "I4: Incremental Inference of Inductive Invariants for Verification of Distributed Protocols",
+        "DuoAI: Fast, Automated Inference of Inductive Invariants for Verifying Distributed Protocols",
+        "Multi-Grained Specifications for Distributed System Model Checking and Verification",
+        "Plankton: Scalable network configuration verification through model checking",
+        "Model Checking Guided Testing for Distributed Systems",
+        "Basilisk: Using Provenance Invariants to Automate Proofs of Undecidable Protocols",
+        "DistAI: Data-Driven Automated Invariant Learning for Distributed Protocols",
+        "Inductive Invariants That Spark Joy: Using Invariant Taxonomies to Streamline Distributed Protocol Proofs",
+        "Harvesting Memory-bound CPU Stall Cycles in Software with MSH"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 24,
+      "query": "\"Performance trade-offs of block-level demand loading and erasure coding in strongly consistent serverless orchestration systems under TCP-like congestion control.\"",
+      "ground_truth_titles": [
+        "ALPS: An Adaptive Learning, Priority OS Scheduler for Serverless Functions",
+        "Burst Computing: Quick, Sudden, Massively Parallel Processing on Serverless Resources",
+        "Concurrency-Informed Orchestration for Serverless Functions",
+        "Dirigent: Lightweight Serverless Orchestration",
+        "FaaSNet: Scalable and Fast Provisioning of Custom Serverless Container Runtimes at Alibaba Cloud Function Compute"
+      ],
+      "abstract_ids": [
+        "4ca0c50f-0dca-4f07-b986-30f0bd02a3fd",
+        "bdfa56c5-c67c-49d4-88a8-3dc688db22a9",
+        "9a69c7de-3d7f-474c-b210-8171aa2a2994",
+        "79c0c86f-f886-4028-b0df-dade9eab8b28",
+        "e09146cc-165a-4ad0-bd84-ed53d8891a24",
+        "be120375-773d-472d-83a0-ed1f95c93fd9",
+        "9f346525-ea4d-4c03-bae3-84d978a3f912",
+        "790cae29-30e3-4578-a170-14c513496f95",
+        "fcbc7b6b-be4d-41dd-a101-75417107a7f3",
+        "93257d3d-d79c-441e-965c-a976006b9f10"
+      ],
+      "paper_names": [
+        "Doing More with Less: Orchestrating Serverless Applications without an Orchestrator",
+        "Stripeless Data Placement for Erasure-Coded In-Memory Storage",
+        "Pronghorn: Effective Checkpoint Orchestration for Serverless Hot-Starts",
+        "Boosting Full-Node Repair in Erasure-Coded Storage",
+        "Unifying Serverless and Microservice Workloads with SigmaOS",
+        "TrEnv: Transparently Share Serverless Execution Environments Across Different Functions and Nodes",
+        "Re-architecting Congestion Management in Lossless Ethernet",
+        "Fork in the Road: Reflections and Optimizations for Cold Start Latency in Production Serverless Systems",
+        "CausalMesh: A Causal Cache for Stateful Serverless Computing",
+        "UnFaaSener: Latency and Cost Aware Offloading of Functions from Serverless Platforms"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 25,
+      "query": "\"Co-design of RDMA-friendly rate limiters and disaggregated memory systems to mitigate remote page access latencies in memory-bound applications.\"",
+      "ground_truth_titles": [
+        "High-throughput and Flexible Host Networking for Accelerated Computing",
+        "AccelTCP: Accelerating Network Applications with Stateful TCP Offloading",
+        "Do OS abstractions make sense on FPGAs?",
+        "EDM: An Ultra-Low Latency Ethernet Fabric for Memory Disaggregation",
+        "Hostping: Diagnosing Intra-host Network Bottlenecks in RDMA Servers"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 26,
+      "query": "\"Performance and scalability trade-offs of Coarse-Grained Reconfigurable Arrays (CGRAs) in accelerating LLM inference workloads compared to traditional GPU-based execution.\"",
+      "ground_truth_titles": [
+        "AWQ: Activation-aware Weight Quantization for On-Device LLM Compression and Acceleration",
+        "CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion",
+        "CatDB: Data-catalog-guided, LLM-based Generation of Data-centric ML Pipelines",
+        "Database Perspective on LLM Inference Systems",
+        "Horizon: Robust Checks for SQL Migration Using LLMs"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 27,
+      "query": "Fundamental trade-offs between push-in first-out (PIFO) scheduling and reinforcement learning-based traffic control in programmable ASICs for low-latency DNN inference over heterogeneous edge accelerators.",
+      "ground_truth_titles": [
+        "SP-PIFO: Approximating Push-In First-Out Behaviors using Strict-Priority Queues",
+        "BFTBrain: Adaptive BFT Consensus with Reinforcement Learning",
+        "Cocktailer: Analyzing and Optimizing Dynamic Control Flow in Deep Learning",
+        "FleetIO: Managing Multi-Tenant Cloud Storage with Multi-Agent Reinforcement Learning",
+        "GaussDB-Vector: A Large-Scale Persistent Real-Time Vector Database for LLM Applications"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 28,
+      "query": "Impact of relaxed consistency and prioritized parameter updates on false-positive regression rates in deep learning recommendation models under intermittent full model updates within microservice topologies.",
+      "ground_truth_titles": [
+        "Accelerating Neural Recommendation Training with Embedding Scheduling",
+        "AdaEmbed: Adaptive Embedding for Large-Scale Recommendation Models",
+        "Conveyor: One-Tool-Fits-All Continuous Software Deployment at Meta",
+        "Cookie Monster: Efficient On-Device Budgeting for Differentially-Private Ad-Measurement Systems",
+        "Data Caching for Enterprise-Grade Petabyte-Scale OLAP"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 29,
+      "query": "\"Optimizing cold start latency in Function-as-a-Service platforms through CPU scheduling and user code initialization co-design under resource contention.\"",
+      "ground_truth_titles": [
+        "ALPS: An Adaptive Learning, Priority OS Scheduler for Serverless Functions",
+        "Burst Computing: Quick, Sudden, Massively Parallel Processing on Serverless Resources",
+        "Concurrency-Informed Orchestration for Serverless Functions",
+        "FaaSnap: FaaS Made Fast Using Snapshot-based VMs",
+        "Groundhog: Efficient Request Isolation in FaaS"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 30,
+      "query": "Impact of independent thread scheduling and scoped synchronization on the scalability of bulk-synchronous GPU programs for graph analytics workloads.",
+      "ground_truth_titles": [
+        "DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization",
+        "A Demonstration of QueryArtisan: Real-Time Data Lake Analysis via Dynamically Generated Data Manipulation Code",
+        "A Tensor Compiler for Unified Machine Learning Prediction Serving",
+        "ALERT: Accurate Learning for Energy and Timeliness",
+        "AssyLLM: Efficient Federated Fine-tuning of LLMs via Assembling Pre-trained Blocks"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 31,
+      "query": "\"Trade-offs between memory bandwidth utilization and sampling latency in GPU-efficient graph sampling systems for large-scale Graph Neural Network training.\"",
+      "ground_truth_titles": [
+        "MariusGNN: Resource-Efficient Out-of-Core Training of Graph Neural Networks",
+        "Seastar: Vertex-Centric Programming for Graph Neural Networks",
+        "Distributed Matrix-Based Sampling for Graph Neural Network Training",
+        "Faster Convergence in Mini-batch Graph Neural Networks Training with Pseudo Full Neighborhood Compensation",
+        "FlexGraph: A flexible and efficient distributed framework for GNN training"
+      ],
+      "abstract_ids": [
+        "eccc73cf-643f-467a-82c7-7266a1fe5b02",
+        "03bc6d00-be22-43c0-8064-6051eacb81f1",
+        "d79a0b01-c160-44d7-92ad-916c070e8e5b",
+        "59f8b380-cc61-48c5-a7d3-e82fe2d5b364",
+        "2265bb10-f42a-4ba3-84ca-ebae1d35205e",
+        "a3815caa-1d41-46e0-be65-3adc0c461ede",
+        "179895c9-7d93-4bd4-b0eb-42023e8b720d",
+        "d3231a6c-74cb-4d9f-ad4a-bcecd3fffe08",
+        "83823700-31c9-4182-b17b-341a60516462",
+        "62947144-2e8c-4090-bf17-713c35f0eab6"
+      ],
+      "paper_names": [
+        "Efficient Graph Data Access for Out-of-Memory GPU Streaming Graph Processing",
+        "BGL: GPU-Efficient GNN Training by Optimizing Graph Data I/O and Preprocessing",
+        "gSampler: General and Efficient GPU-based Graph Sampling for Graph Learning",
+        "MariusGNN: Resource-Efficient Out-of-Core Training of Graph Neural Networks",
+        "FastGL: A GPU-Efficient Framework for Accelerating Sampling-Based GNN Training at Large Scale",
+        "GNNLab: A Factored System for Sample-based GNN Training over GPUs",
+        "NeutronTask: Scalable and Efficient Multi-GPU GNN Training with Task Parallelism",
+        "WiseGraph: Optimizing GNN with Joint Workload Partition of Graph and Operations",
+        "GNNAdvisor: An Adaptive and Efficient Runtime System for GNN Acceleration on GPUs",
+        "Graph Neural Network Training Systems: A Performance Comparison of Full-Graph and Mini-Batch"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.14606834984270645,
+      "matched_ground_truth_titles": [
+        "MariusGNN: Resource-Efficient Out-of-Core Training of Graph Neural Networks"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 32,
+      "query": "Impact of pseudo full neighborhood compensation on gradient estimation errors in disk-based, multi-GPU training of GNN-based recommender systems.",
+      "ground_truth_titles": [
+        "Distributed Matrix-Based Sampling for Graph Neural Network Training",
+        "FastGL: A GPU-Efficient Framework for Accelerating Sampling-Based GNN Training at Large Scale",
+        "GNNAdvisor: An Adaptive and Efficient Runtime System for GNN Acceleration on GPUs",
+        "Graph Neural Network Training Systems: A Performance Comparison of Full-Graph and Mini-Batch",
+        "GraphSparseNet: a Novel Method for Large Scale Traffic Flow Prediction"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 33,
+      "query": "Security and performance trade-offs in hardware-enforced confidential computing: A comparative analysis of AMD SEV, Intel TDX, and ARM TrustZone for write-heavy applications and cache-coherent memory hierarchies.",
+      "ground_truth_titles": [
+        "Fail through the Cracks: Cross-System Interaction Failures in Modern Cloud Systems",
+        "Johnny Cache: the End of DRAM Cache Conflicts (in Tiered Main Memory Systems)",
+        "PhasePrint: Exposing Cloud FPGA Fingerprints by Inducing Timing Faults at Runtime",
+        "Sharing is leaking: blocking transient-execution attacks with core-gapped confidential VMs",
+        "TaintEMU: Decoupling Tracking from Functional Domains for Architecture-Agnostic and Efficient Whole-System Taint Tracking"
+      ],
+      "abstract_ids": [
+        "74b2fbfa-7a09-438f-a4c6-04f04c083aca",
+        "c8e02ba8-fde2-4339-9647-801f78cde168",
+        "8370afd2-da6f-44d0-a3ca-86bcecaf3e19",
+        "6ce0c3e2-6cc4-4765-b9ec-83fb93bebf85",
+        "c70a597e-b5cf-4695-b986-9715b28247b5",
+        "5842fe25-c8c7-477b-b541-f03b56eea1d8",
+        "394b82ee-ba7d-44aa-b58b-aba76c09c180",
+        "970e2cfd-6106-45fc-a808-f4555d1d34ab",
+        "65e8f722-d7dd-46ff-9351-3f9292b66a21",
+        "7fbf6f6d-31bb-4433-8765-82d3d0ff7c30"
+      ],
+      "paper_names": [
+        "Sharing is leaking: blocking transient-execution attacks with core-gapped confidential VMs",
+        "Minimum Viable Device Drivers for ARM TrustZone",
+        "Reexamining Direct Cache Access to Optimize I/O Intensive Applications for Multi-hundred-gigabit Networks",
+        "TwinVisor: Hardware-isolated Confidential Virtual Machines for ARM",
+        "Design and Verification of the Arm Confidential Compute Architecture",
+        "VeriSMo: A Verified Security Module for Confidential VMs",
+        "P2CACHE: Exploring Tiered Memory for In-Kernel File Systems Caching",
+        "Characterizing the Performance of Intel Optane Persistent Memory — A Close Look at its On-DIMM Buffering",
+        "Toleo: Scaling Freshness to Tera-scale Memory Using CXL and PIM",
+        "Austere Flash Caching with Deduplication and Compression"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 1,
+      "recall_at_k": 0.2,
+      "ndcg_at_k": 0.3391602052736161,
+      "matched_ground_truth_titles": [
+        "Sharing is leaking: blocking transient-execution attacks with core-gapped confidential VMs"
+      ],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 34,
+      "query": "Impact of ECMP hash algorithm limitations on flow completion times in hyper-scale data centers with commodity switches and stripeless erasure coding.",
+      "ground_truth_titles": [
+        "Accessing Cloud with Disaggregated Software-Defined Router",
+        "Aceso: Achieving Efficient Fault Tolerance in Memory-Disaggregated Key-Value Stores",
+        "An edge-queued datagram service for all datacenter traffic",
+        "Automated SmartNIC Offloading Insights for Network Functions",
+        "Boosting Full-Node Repair in Erasure-Coded Storage"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 35,
+      "query": "Fundamental scalability limits of Multi-version Concurrency Control (MVCC) in exa-scale HTAP systems under batched transaction execution on GPU-accelerated architectures.",
+      "ground_truth_titles": [
+        "Retrofitting High Availability Mechanism to Tame Hybrid Transaction/Analytical Processing",
+        "veDB-HTAP: a Highly Integrated, Efficient and Adaptive HTAP System",
+        "CUBIT: Concurrent Updatable Bitmap Indexing",
+        "Detecting Transactional Bugs in Database Engines via Graph-Based Oracle Construction",
+        "Hermes: Off-the-Shelf Real-Time Transactional Analytics"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 36,
+      "query": "\"Zero-shot search strategies and ontological closed path rules for improving fairness and validity in embedding-based link prediction models over incomplete and inconsistent knowledge graphs.\"",
+      "ground_truth_titles": [
+        "Astraea: Towards Fair and Efficient Learning-based Congestion Control",
+        "Is Long Context All You Need? Leveraging LLM's Extended Context for NL2SQL",
+        "Mining Meaningful Keys and Foreign Keys with High Precision and Recall",
+        "PlanRGCN: Predicting SPARQL Query Performance",
+        "Revisiting CNNs for Trajectory Similarity Learning"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 37,
+      "query": "Fundamental limits of unsupervised clustering in multimodal entity linking: Can tree cover structures and bipartite graph formulations improve energy-efficient resource allocation on benchmarks like OpenMEL, RAMSIS, and KB-augmented ImageNet?",
+      "ground_truth_titles": [
+        "ACCURATE LOW-DEGREE POLYNOMIAL APPROXIMATION OF NON-POLYNOMIAL OPERATORS FOR FAST PRIVATE INFERENCE IN HOMOMORPHIC ENCRYPTION",
+        "APEX-DAG: Library and Language independent Pipeline EXtraction",
+        "AutoSys: The Design and Operation of Learning-Augmented Systems",
+        "Beware of Fragmentation: Scheduling GPU-Sharing Workloads with Fragmentation Gradient Descent",
+        "CASSINI: Network-Aware Job Scheduling in Machine Learning Clusters"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 38,
+      "query": "Impact of semantic hash techniques and similarity space selection mechanisms on deduplication efficiency in encrypted Docker image backups using message-locked encryption.",
+      "ground_truth_titles": [
+        "Accelerating Encrypted Deduplication via SGX",
+        "DumpKV: Learning based lifetime aware garbage collection for key value separation in LSM-tree",
+        "Evaluating Methods for Efficient Entity Count Estimation",
+        "LoopDelta: Embedding Locality-aware Opportunistic Delta Compression in Inline Deduplication for Highly Efficient Data Reduction",
+        "Overcoming the Last Mile between Log-Structured File Systems and Persistent Memory via Scatter Logging"
+      ],
+      "abstract_ids": [
+        "e22d3210-1c62-49ae-be2c-76a730331858",
+        "f9b390fb-7f30-4ff8-a8aa-269b5a48e391",
+        "e31693c0-e1fa-4076-8299-6282f26adaf7",
+        "de2d7c10-c31f-4f39-a0f8-e1a115ea91b5",
+        "7b5ae0a5-69ed-4e35-a03c-3bf02c5c5d9e",
+        "97077c39-4f71-4408-b6e5-887fee0fd753",
+        "7c85e3e1-c933-4420-9ec7-c547f026ad0a",
+        "797291f9-5431-44fc-9df4-c77e4545d0c3",
+        "43f709c4-0e19-4a5f-a30e-cfd4dae56895",
+        "ec879d5d-cfda-4d91-9626-1bb30edce397"
+      ],
+      "paper_names": [
+        "SimEnc: A High-Performance Similarity-Preserving Encryption Approach for Deduplication of Encrypted Docker Images",
+        "DupHunter: Flexible High-Performance Deduplication for Docker Registries",
+        "Kivi: Verification for Cluster Management",
+        "SuperBench: Improving Cloud AI Infrastructure Reliability with Proactive Validation",
+        "Testing Configuration Changes in Context to Prevent Production Failures",
+        "Transparent GPU Sharing in Container Clouds for Deep Learning Workloads",
+        "Caladan: Mitigating Interference at Microsecond Timescales",
+        "Sundial: Fault-tolerant Clock Synchronization for Datacenters",
+        "VMSH: Hypervisor-agnostic Guest Overlays for VMs",
+        "coIOMMU: A Virtual IOMMU with Cooperative DMA Buffer Tracking for Efficient Memory Management in Direct I/O"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 39,
+      "query": "Impact of ECMP hash algorithm design on 5G User Plane Function (UPF) throughput and flow stickiness in hyper-scale data center networks using P4-programmable switches.",
+      "ground_truth_titles": [
+        "Backpressure Flow Control",
+        "Cetus: Releasing P4 Programmers from the Chore of Trial and Error Compiling",
+        "Contra: A Programmable System for Performance-aware Routing",
+        "Empower Programmable Pipeline for Advanced Stateful Packet Processing",
+        "Enabling In-situ Programmability in Network Data Plane: From Architecture to Language"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 40,
+      "query": "\"Trade-offs between modularity, lifelong learning stability, and query optimization accuracy in non-intrusive learned query optimizers for stateful database management systems like Postgres and Redshift.\"",
+      "ground_truth_titles": [
+        "Enhancing Transaction Processing through Indirection Skipping",
+        "Anarchy in the Database: A Survey and Evaluation of Database Management System Extensibility",
+        "Avoiding Materialisation for Guarded Aggregate Queries",
+        "Conformal Prediction for Verifiable Learned Query Optimization",
+        "Detecting Transactional Bugs in Database Engines via Graph-Based Oracle Construction"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 41,
+      "query": "Fundamental limits of AUC optimization in imbalanced multivariate time series anomaly detection under dynamic filtering constraints.",
+      "ground_truth_titles": [
+        "Distributed Matrix-Based Sampling for Graph Neural Network Training",
+        "FastGL: A GPU-Efficient Framework for Accelerating Sampling-Based GNN Training at Large Scale",
+        "Faster Convergence in Mini-batch Graph Neural Networks Training with Pseudo Full Neighborhood Compensation",
+        "GNNAdvisor: An Adaptive and Efficient Runtime System for GNN Acceleration on GPUs",
+        "Graph Neural Network Training Systems: A Performance Comparison of Full-Graph and Mini-Batch"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 42,
+      "query": "Trade-offs between criticality-aware power management and live migration latency in virtualized environments targeting four-nines availability for performance-critical workloads.",
+      "ground_truth_titles": [
+        "Kamino: Efficient VM Allocation at Scale with Latency-Driven Cache-Aware Scheduling",
+        "AutoARTS: Taxonomy, Insights and Tools for Root Cause Labelling of Incidents in Microsoft Azure",
+        "CPC: Flexible, Secure, and Efficient CVM Maintenance with Confidential Procedure Calls",
+        "Cloud-LoRa: Enabling Cloud Radio Access LoRa Networks Using Reinforcement Learning Based Bandwidth-Adaptive Compression",
+        "Cocktail: A Multidimensional Optimization for Model Serving in Cloud"
+      ],
+      "abstract_ids": [
+        "44a8d8b0-b0f1-4a85-8c38-b6bb79e81b55",
+        "f0b9f95b-e2b9-4df9-bebd-223db383d37f",
+        "9d343b5c-64e5-4691-bd6b-9df6b7a7faad",
+        "cad02505-dcea-4daf-865f-5936683785b0",
+        "92d85235-60dc-4471-a71a-2e1fd0a902e4",
+        "c20033bc-0920-4bc5-8724-036dd9fb795f",
+        "05c82d5f-1d53-4216-a814-cdc1b287e7a3",
+        "ca78717f-95d5-4113-a6c9-df4d7c314ff3",
+        "bfa0845e-551f-43a9-b35f-5d6644ea1b14",
+        "f902a01a-1347-44a9-ad9d-6974d9595442"
+      ],
+      "paper_names": [
+        "UFO: The Ultimate QoS-Aware Core Management for Virtualized and Oversubscribed Public Clouds",
+        "Virtual Machine Preserving Host Updates for Zero Day Patching in Public Cloud",
+        "Speculative Recovery: Cheap, Highly Available Fault Tolerance with Disaggregated Storage",
+        "Prediction-Based Power Oversubscription in Cloud Platforms",
+        "UniStore: A fault-tolerant marriage of causal and strong consistency",
+        "Cooperative Graceful Degradation in Containerized Clouds",
+        "Accelerating Nested Virtualization with HyperTurtle",
+        "Meaningful Availability",
+        "HyperHammer: Breaking Free from KVM-Enforced Isolation",
+        "Translation Pass-Through for Near-Native Paging Performance in VMs"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 43,
+      "query": "Impact of SSD-friendly I/O optimizations and in-storage indexing on the communication efficiency and convergence stability of federated learning systems under ε-FDP guarantees.",
+      "ground_truth_titles": [
+        "Federated Incomplete Tabular Data Prediction with Missing Complementarity",
+        "Accelerating LLM Serving for Multi-turn Dialogues with Efficient Resource Management",
+        "Achieving Low-Latency Graph-Based Vector Search via Aligning Best-First Search Algorithm with SSD",
+        "AssyLLM: Efficient Federated Fine-tuning of LLMs via Assembling Pre-trained Blocks",
+        "BIZA: Design of Self-Governing Block-Interface ZNS AFA for Endurance and Performance"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 44,
+      "query": "Fundamental limits of schema-guided self-supervision in heterogeneous information networks: Can masked schema reconstruction provably recover structurally similar communities under sparse and noisy relational constraints?",
+      "ground_truth_titles": [
+        "Daredevil: Rescue Your Flash Storage from Inflexible Kernel Storage Stack",
+        "FpgaNIC: An FPGA-based Versatile 100Gb SmartNIC for GPUs",
+        "From Genesis to Maturity: Managing Knowledge Graph Ecosystems Through Life Cycles",
+        "Jupiter: Pushing the Speed and Scalability Limitations for Subgraph Matching on Multi-GPUs",
+        "KEPC-Push: A Knowledge-Enhanced Proactive Content Push Strategy for Edge-Assisted Video Feed Streaming"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 45,
+      "query": "Impact of TLB misses and page coalescing methods on the performance of AI workloads in virtualized platforms with Linux/KVM and huge pages.",
+      "ground_truth_titles": [
+        "Accessing Cloud with Disaggregated Software-Defined Router",
+        "Application-Level Service Assurance with 5G RAN Slicing",
+        "Aquila: A unified, low-latency fabric for datacenter networks",
+        "Ayudante: A Deep Reinforcement Learning Approach to Assist Persistent Memory Programming",
+        "Basil: Breaking up BFT with ACID (transactions)"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 46,
+      "query": "Fundamental trade-offs between communication efficiency and model expressivity in state-of-the-art Federated Graph Learning (FGL) algorithms under the think-like-a-vertex computing paradigm.",
+      "ground_truth_titles": [
+        "MGG: Accelerating Graph Neural Networks with Fine-Grained Intra-Kernel Communication-Computation Pipelining on Multi-GPU Platforms",
+        "CEGS: Configuration Example Generalizing Synthesizer",
+        "FastGL: A GPU-Efficient Framework for Accelerating Sampling-Based GNN Training at Large Scale",
+        "FlexGraph: A flexible and efficient distributed framework for GNN training",
+        "Seastar: Vertex-Centric Programming for Graph Neural Networks"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 47,
+      "query": "Fundamental throughput bottlenecks in sparse graph neural network workloads on GPU Tensor Core Units versus CUDA cores under east-west traffic patterns in data center networks.",
+      "ground_truth_titles": [
+        "MGG: Accelerating Graph Neural Networks with Fine-Grained Intra-Kernel Communication-Computation Pipelining on Multi-GPU Platforms",
+        "CEGS: Configuration Example Generalizing Synthesizer",
+        "FastGL: A GPU-Efficient Framework for Accelerating Sampling-Based GNN Training at Large Scale",
+        "FlexGraph: A flexible and efficient distributed framework for GNN training",
+        "Seastar: Vertex-Centric Programming for Graph Neural Networks"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 48,
+      "query": "Trade-offs between wear leveling strategies and crash consistency mechanisms in NOR flash file systems for deep learning inference on resource-constrained microcontroller units.",
+      "ground_truth_titles": [
+        "Accelerating Encrypted Deduplication via SGX",
+        "Accelerating Graph Sampling for Graph Machine Learning using GPUs",
+        "Accelerating Nested Virtualization with HyperTurtle",
+        "Aceso: Efficient Parallel DNN Training through Iterative Bottleneck Alleviation",
+        "AlpaServe: Statistical Multiplexing with Model Parallelism for Deep Learning Serving"
+      ],
+      "abstract_ids": [],
+      "paper_names": [],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    },
+    {
+      "query_id": 49,
+      "query": "Impact of BGP withdrawal suppression and route leaks on worst-case link loads and traffic forwarding stability in ISP networks under edge peering failure scenarios.",
+      "ground_truth_titles": [
+        "A Generic Communication Scheduler for Distributed DNN Training Acceleration",
+        "A Linux Kernel Implementation of the Homa Transport Protocol",
+        "A System to Detect Forged-Origin BGP Hijacks",
+        "ACCL+: an FPGA-Based Collective Engine for Distributed Applications",
+        "Accelerating Neural Recommendation Training with Embedding Scheduling"
+      ],
+      "abstract_ids": [
+        "f5627c35-56b4-4727-95f8-e164664b8b44",
+        "ea353c93-3ed0-46b2-9b73-16728b11ea0c",
+        "27697644-cf1f-492a-a972-c4d67b78f71f",
+        "0ecdf350-c257-4163-9bb7-88e8b27dfc04",
+        "4d27da92-03cf-4d78-9f1e-0335b9aa9189",
+        "baa843b8-2304-42da-93e5-d81e52ad59e4",
+        "2091e252-3707-45a6-b2b1-84bbbec06a7e",
+        "18aaa35e-c53c-4459-a802-7a1a3739b304",
+        "e7cf4729-edd0-4398-a1ab-b5e64be329b9",
+        "8015109a-18b8-4251-b915-fcc145778f73"
+      ],
+      "paper_names": [
+        "Verifying maximum link loads in a changing world",
+        "Staying Alive: Connection Path Reselection at the Edge",
+        "Suppressing BGP Zombies with Route Status Transparency",
+        "Yeti: Stateless and Generalized Multicast Forwarding",
+        "xBGP: Faster Innovation in Routing Protocols",
+        "Characterizing Physical-Layer Transmission Errors in Cable Broadband Networks",
+        "Enabling Users to Control their Internet",
+        "MESSI: Behavioral Testing of BGP Implementations",
+        "cISP: A Speed-of-Light Internet Service Provider",
+        "Running BGP in Data Centers at Scale"
+      ],
+      "num_ground_truth": 5,
+      "hits_at_k": 0,
+      "recall_at_k": 0.0,
+      "ndcg_at_k": 0.0,
+      "matched_ground_truth_titles": [],
+      "skipped_empty_ground_truth": false
+    }
+  ],
+  "metrics": {
+    "k": 10,
+    "num_queries": 50,
+    "skipped_queries_empty_ground_truth": 0,
+    "total_queries_before_skip": 50,
+    "mean_recall_at_k": 0.04,
+    "median_recall_at_k": 0.0,
+    "mean_ndcg_at_k": 0.03060272806341543,
+    "median_ndcg_at_k": 0.0,
+    "queries_with_any_ground_truth_hit": 10,
+    "queries_with_full_ground_truth_recall": 0,
+    "fraction_queries_with_any_hit": 0.2,
+    "title_match_fuzzy": false
+  },
+  "run_metadata": {
+    "input_file": "/Users/lexi/workplace/oversight/final_query_2602/sampled_multi_paper_entities_n2_output.json",
+    "started_at_epoch": 1776360034,
+    "elapsed_seconds": 152.63186407089233,
+    "retrieval_backend": "linear_rag",
+    "embedding_model": "all-MiniLM-L6-v2",
+    "linear_rag_embedding_model": "all-MiniLM-L6-v2",
+    "top_k": 10,
+    "time_window_days": 18250,
+    "selected_sources": [
+      "arxiv",
+      "ICML",
+      "NeurIPS",
+      "ICLR",
+      "OSDI",
+      "SOSP",
+      "ASPLOS",
+      "ATC",
+      "NSDI",
+      "MLSys",
+      "EuroSys",
+      "VLDB"
+    ],
+    "rerank": true,
+    "agent_expected_subtopics": "len(ground_truth_titles) per query passed to QueryDecompositionAgent.decompose",
+    "ground_truth_replaced_from": "/Users/yisijiu/Desktop/Final_output/top5_overlap_for_n2.jsonl",
+    "recomputed_with_skip_empty_ground_truth": true
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "description": "Recomputed after replacing GT with top5_overlap_papers (aligned by original GT title); empty GT skipped.",
+    "k": 10,
+    "splits": {
+      "n0": {
+        "output_file": "n0_linear_rag_eval.json",
+        "num_queries": 43,
+        "skipped_queries_empty_ground_truth": 7,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.2186046511627907,
+        "mean_ndcg_at_k": 0.15534011909796577,
+        "median_ndcg_at_k": 0.1208113026994942,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.0,
+            "mean_ndcg_at_k": 0.0
+          },
+          "3": {
+            "mean_recall_at_k": 0.07441860465116279,
+            "mean_ndcg_at_k": 0.08612797977517475
+          },
+          "5": {
+            "mean_recall_at_k": 0.17209302325581396,
+            "mean_ndcg_at_k": 0.12921279444674444
+          },
+          "10": {
+            "mean_recall_at_k": 0.2186046511627907,
+            "mean_ndcg_at_k": 0.15534011909796577
+          }
+        }
+      },
+      "n1": {
+        "output_file": "n1_linear_rag_eval.json",
+        "num_queries": 50,
+        "skipped_queries_empty_ground_truth": 0,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.15866666666666668,
+        "mean_ndcg_at_k": 0.11851131590536441,
+        "median_ndcg_at_k": 0.0,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.012000000000000002,
+            "mean_ndcg_at_k": 0.06
+          },
+          "3": {
+            "mean_recall_at_k": 0.06466666666666666,
+            "mean_ndcg_at_k": 0.08736032288674432
+          },
+          "5": {
+            "mean_recall_at_k": 0.094,
+            "mean_ndcg_at_k": 0.08520009151026375
+          },
+          "10": {
+            "mean_recall_at_k": 0.15866666666666668,
+            "mean_ndcg_at_k": 0.11851131590536441
+          }
+        }
+      },
+      "n2": {
+        "output_file": "n2_linear_rag_eval.json",
+        "num_queries": 50,
+        "skipped_queries_empty_ground_truth": 0,
+        "total_queries_before_skip": 50,
+        "mean_recall_at_k": 0.04,
+        "mean_ndcg_at_k": 0.03060272806341543,
+        "median_ndcg_at_k": 0.0,
+        "metrics_by_k": {
+          "1": {
+            "mean_recall_at_k": 0.004,
+            "mean_ndcg_at_k": 0.02
+          },
+          "3": {
+            "mean_recall_at_k": 0.008,
+            "mean_ndcg_at_k": 0.015307212739772433
+          },
+          "5": {
+            "mean_recall_at_k": 0.02,
+            "mean_ndcg_at_k": 0.019529764944117966
+          },
+          "10": {
+            "mean_recall_at_k": 0.04,
+            "mean_ndcg_at_k": 0.03060272806341543
+          }
+        }
+      }
+    },
+    "overall": {
+      "total_queries": 143,
+      "k": 10,
+      "mean_recall_at_k": 0.1351981351981352,
+      "mean_ndcg_at_k": 0.09884844279476587,
+      "median_recall_at_k": 0.0,
+      "median_ndcg_at_k": 0.0,
+      "metrics_by_k": {
+        "1": {
+          "mean_recall_at_k": 0.005594405594405594,
+          "mean_ndcg_at_k": 0.027972027972027972
+        },
+        "3": {
+          "mean_recall_at_k": 0.04778554778554779,
+          "mean_ndcg_at_k": 0.06179636301858987
+        },
+        "5": {
+          "mean_recall_at_k": 0.09160839160839161,
+          "mean_ndcg_at_k": 0.07547302785964402
+        },
+        "10": {
+          "mean_recall_at_k": 0.1351981351981352,
+          "mean_ndcg_at_k": 0.09884844279476587
+        }
+      },
+      "skipped_queries_empty_ground_truth": 7,
+      "total_queries_before_skip": 150
+    }
+  },
+  "run_metadata": {
+    "title_match_fuzzy": false,
+    "ground_truth_source_dir": "/Users/yisijiu/Desktop/Final_output",
+    "output_dir": "/Users/yisijiu/Projects/oversight/final_query_2602/linear_rag_results/multi_hop_linear_rag_eval_summary"
+  }
+}
