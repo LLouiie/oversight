@@ -1,6 +1,17 @@
-# Oversight
+<div align="center">
+  <h1 style="font-size: 2.5em; line-height: 1.2; margin: 0.2em 0; border: none; padding: 0;">Multihop Oversight</h1>
+</div>
 
-A research paper search system built on [LinearRAG](LinearRAG/), combining graph-based retrieval with LLM-driven query decomposition.
+Multihop Oversight extends the original [Oversight](https://github.com/ottowhite/oversight) paper search stack. To support **multihop** questions, we add a **query-decomposition agent** that splits the user query into **subqueries**, wire retrieval through **[LinearRAG](LinearRAG/)** (graph-based RAG over passages and entities), and add a **reranker** to rescore and reorder candidates.
+
+## System overview
+
+- **Inherits from Oversight** — the same `data/` paper corpus, Flask search API, and Next.js front end as the upstream project. Multihop behavior is added **on top of** that baseline.
+- **Subquery agent** — an LLM-backed **query-decomposition** step (`oversight/query_decomposition_agent.py`) turns one user question into **subqueries** you can run sequentially or in combination for multihop coverage (OpenAI by default, or a local OpenAI-compatible server; see `example.env`).
+- **LinearRAG** — subqueries (and the original query) drive **[LinearRAG](LinearRAG/)** retrieval: dense passage, sentence, and entity encodings plus a **knowledge graph** for graph-aware search over the corpus.
+- **Reranker** — an optional **BGE** cross-encoder pass (`OVERSIGHT_RERANK_*` in `example.env`) rescores candidates so the final list better matches the full multihop intent.
+
+**Request path (simplified):** `user query → decomposition agent → subqueries → LinearRAG retrieval → (optional) reranker → results`.
 
 ---
 
@@ -16,7 +27,7 @@ A research paper search system built on [LinearRAG](LinearRAG/), combining graph
 
 ## How LinearRAG data is generated
 
-The retrieval backend is powered by **LinearRAG**, a graph-based RAG pipeline. Before the system can answer queries, the paper corpus must be indexed into three embedding stores (passage, entity, sentence) and a knowledge graph. The pipeline runs automatically on the first search request, but can also be prepared offline.
+**LinearRAG** is the retrieval core used **after** the subquery agent. The paper corpus (same layout as upstream Oversight) must be **indexed** into three embedding stores (passage, entity, sentence) and a **knowledge graph** before (or on first) search. That index is what each subquery hits during graph-based RAG. The pipeline can run on the **first** backend search request, or you can pre-build it offline.
 
 ### Data sources
 
@@ -51,7 +62,7 @@ python flask_app.py
 
 ## Setup
 
-1. **Python 3.10+**, install dependencies from the repository root:
+1. **Python 3.10+**, install dependencies from the repository root (includes LinearRAG, the query agent client, the reranker stack, and the web app):
 
    ```bash
    uv sync
@@ -70,24 +81,28 @@ python flask_app.py
    cp example.env .env
    ```
 
-   Key variables to set in `.env`:
+   Configure **(i)** LinearRAG data paths and embedding model (`LINEAR_RAG_*`), **(ii)** the **subquery** LLM (`OPENAI_*` or `LOCAL_AGENT_LLM_*` when `QUERY_DECOMPOSITION_AGENT_MODE=local`), and **(iii)** the optional **reranker** (`OVERSIGHT_RERANK_*`). Highlights:
 
    | Variable | Description |
    |----------|-------------|
-   | `OPENAI_API_KEY` | Required — used by the query decomposition agent. |
-   | `OPENAI_MODEL` | Chat model (default: `gpt-4o`). |
+   | `OPENAI_API_KEY` | Required for **openai** mode — subquery decomposition. |
+   | `OPENAI_MODEL` | Chat model for the agent (default: `gpt-4o`). |
+   | `QUERY_DECOMPOSITION_AGENT_MODE` | `openai` (default) or `local` (self-hosted vLLM, etc.). |
+   | `LINEAR_RAG_DATA_DIR` / `LINEAR_RAG_*` | Corpus and LinearRAG working paths; embedding and NER model names. |
+   | `OVERSIGHT_RERANK_ENABLED` | `true` / `false` — BGE reranker after LinearRAG retrieval. |
    | `FLASK_PORT` | Backend port (default: `5001`). |
-   | `QUERY_DECOMPOSITION_AGENT_MODE` | `openai` (default) or `local` (self-hosted vLLM etc.). |
 
-   For a local LLM, set `QUERY_DECOMPOSITION_AGENT_MODE=local` and configure `LOCAL_AGENT_LLM_BASE_URL`, `LOCAL_AGENT_LLM_MODEL`, `LOCAL_AGENT_LLM_API_KEY`. All other variables have sensible defaults — see `example.env` for the full list.
+   For a local subquery LLM, set `QUERY_DECOMPOSITION_AGENT_MODE=local` and `LOCAL_AGENT_LLM_BASE_URL`, `LOCAL_AGENT_LLM_MODEL`, `LOCAL_AGENT_LLM_API_KEY`. Full defaults and comments are in `example.env`.
 
 ---
 
 ## Run
 
+With the stack running, a search request follows the path **agent (subqueries) → LinearRAG → reranker (if enabled)**.
+
 **Backend** (from the repository root):
 
-> **macOS note:** export `KMP_DUPLICATE_LIB_OK=TRUE` before starting Python to prevent a crash caused by duplicate OpenMP runtimes loaded by PyTorch and the reranker. All other threading variables are set automatically inside `flask_app.py`.
+> **macOS note:** export `KMP_DUPLICATE_LIB_OK=TRUE` before starting Python to avoid a crash from duplicate OpenMP runtimes (PyTorch + sentence-transformers + the reranker). Other threading variables are set at the top of `flask_app.py`.
 
 ```bash
 export KMP_DUPLICATE_LIB_OK=TRUE
@@ -117,14 +132,14 @@ curl http://127.0.0.1:5001/api/health
 
 ## Benchmark (optional)
 
-`benchmark/` contains evaluation queries and ground-truth labels. It is not required to run the web app.
+`benchmark/` holds **multihop**-style evaluation queries and ground truth (n0 / n1 / n2). Use it to measure LinearRAG (+ agent + optional rerank) against labels — not required for the web UI.
 
 ```bash
-# Run retrieval eval on n0 / n1 / n2 splits; writes results to benchmark/linear_rag_results/
+# Run eval on n0 / n1 / n2; writes results to benchmark/linear_rag_results/
 python scripts/eval/run_final_query_2602_linear_rag.py
 
-# Recompute metrics with multihop ground truth (reads benchmark/linear_rag_results/groundtruth/)
+# Recompute metrics from multihop ground truth (reads benchmark/.../groundtruth/)
 python scripts/eval/multi_hop_recompute.py
 ```
 
-See `python scripts/eval/run_final_query_2602_linear_rag.py --help` for available flags (`--limit`, `--rerank`, `--fuzzy-titles`, etc.).
+See `python scripts/eval/run_final_query_2602_linear_rag.py --help` for flags such as `--limit`, `--rerank`, and `--fuzzy-titles` (mirrors the rerank stage in the app).
