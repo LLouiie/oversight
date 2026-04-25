@@ -7,10 +7,10 @@ A research paper search system built on [LinearRAG](LinearRAG/), combining graph
 ## Demo
 
 <video width="100%" controls playsinline>
-  <source src="demo/4月25日.mov" type="video/quicktime" />
+  <source src="demo/oversight-demo.mov" type="video/quicktime" />
 </video>
 
-If the preview does not load in your browser, open the file in the repository: [`demo/4月25日.mov`](demo/4月25日.mov)
+If the preview does not load in your browser, open the file in the repository: [`demo/oversight-demo.mov`](demo/oversight-demo.mov)
 
 ---
 
