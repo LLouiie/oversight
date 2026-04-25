@@ -29,7 +29,7 @@ for _p in (REPO_ROOT, EVAL_DIR):
 
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from oversight.agent_retrieval_merge import merge_linear_rag_agent_results
 from oversight.linear_rag_search import LinearRAGSearchEngine
@@ -38,6 +38,7 @@ from oversight.reranker import BGEReranker
 
 _search_engine: LinearRAGSearchEngine | None = None
 _reranker: BGEReranker | None = None
+DEFAULT_AGENT_BRANCH_LIMIT = 50
 
 
 def _get_reranker() -> BGEReranker | None:
@@ -120,6 +121,27 @@ def _paper_to_api_dict(p: Any) -> dict[str, Any]:
     }
 
 
+def _agent_branch_limit(final_limit: int) -> int:
+    raw = os.getenv("LINEAR_RAG_AGENT_BRANCH_LIMIT", str(DEFAULT_AGENT_BRANCH_LIMIT))
+    try:
+        configured = int(raw)
+    except (TypeError, ValueError):
+        configured = DEFAULT_AGENT_BRANCH_LIMIT
+    return max(final_limit, max(1, min(100, configured)))
+
+
+def _resolve_rerank_max_input(rerank_max_input: int | None) -> int:
+    raw = (
+        rerank_max_input
+        if rerank_max_input is not None
+        else os.getenv("OVERSIGHT_RERANK_MAX_INPUT", "60")
+    )
+    try:
+        return max(1, min(500, int(raw)))
+    except (TypeError, ValueError):
+        return 60
+
+
 def load_queries(path: str) -> list[dict]:
     """Load queries from either query_flat.json format or multi_output.json format."""
     with open(path, "r", encoding="utf-8") as f:
@@ -149,20 +171,38 @@ def _search_like_api(
     agent = QueryDecompositionAgent.from_env()
     agent_run = agent.decompose(query_text, expected_subtopics=expected_subtopics)
     query_timedelta = timedelta(days=time_window_days)
+    max_rerank_input = _resolve_rerank_max_input(rerank_max_input)
 
-    if not agent_run.enabled:
+    def search_original_query() -> list[dict[str, Any]]:
+        candidate_limit = limit
+        if rerank_requested:
+            candidate_limit = max(limit, min(100, max_rerank_input))
         papers = search_engine.search_related_papers(
             query_text=query_text,
             query_timedelta=query_timedelta,
             selected_sources=selected_sources,
-            limit=limit,
+            limit=candidate_limit,
         )
-        return [_paper_to_api_dict(p) for p in papers]
+        results = [_paper_to_api_dict(p) for p in papers]
+        if not rerank_requested or not results:
+            return results[:limit]
+        reranker = _get_reranker()
+        if reranker is None:
+            return results[:limit]
+        return reranker.rerank(
+            query=query_text,
+            papers=results[:max_rerank_input],
+            top_k=min(limit, len(results)),
+        )
+
+    if not agent_run.enabled:
+        return search_original_query()
 
     if agent_run.round1_status == "failed":
-        return []
+        return search_original_query()
 
     query_groups: list[dict[str, Any]] = []
+    branch_limit = _agent_branch_limit(limit)
     for branch in agent_run.branches:
         group_payload = branch.to_dict()
         group_payload["results"] = []
@@ -176,7 +216,7 @@ def _search_like_api(
                 query_text=branch.search_query,
                 query_timedelta=query_timedelta,
                 selected_sources=selected_sources,
-                limit=limit,
+                limit=branch_limit,
             )
             group_payload["results"] = [_paper_to_api_dict(p) for p in papers]
         except Exception:
@@ -186,15 +226,10 @@ def _search_like_api(
 
         query_groups.append(group_payload)
 
-    if not any(group.get("status") == "success" for group in query_groups):
-        return []
+    if not any(group.get("status") == "success" and (group.get("results") or []) for group in query_groups):
+        return search_original_query()
 
-    reranker = _get_reranker()
-    max_rerank_input = (
-        int(rerank_max_input)
-        if rerank_max_input is not None
-        else int(os.getenv("OVERSIGHT_RERANK_MAX_INPUT", "60"))
-    )
+    reranker = _get_reranker() if rerank_requested else None
     results = merge_linear_rag_agent_results(
         query_groups,
         original_query=query_text,
@@ -205,7 +240,10 @@ def _search_like_api(
         expected_subtopics=expected_subtopics,
     )
 
-    return results
+    if not results:
+        return search_original_query()
+
+    return results[:limit]
 
 
 def build_results(

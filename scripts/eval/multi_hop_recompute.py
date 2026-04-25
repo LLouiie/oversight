@@ -6,7 +6,7 @@ Recompute n0/n1/n2 eval metrics after replacing ground truth titles with
 Notes:
 - Empty ground truth after replacement is skipped from metric aggregation.
 - Writes updated per-split eval JSONs and a merged summary JSON (with metrics_by_k).
-- Paths are configurable via CLI; no hardcoded absolute paths.
+- Paths are configurable via CLI; repo-root defaults below.
 """
 
 from __future__ import annotations
@@ -19,15 +19,21 @@ from pathlib import Path
 from typing import Any
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_RESULTS_DIR = SCRIPT_DIR.parent
-DEFAULT_OUT_DIR = SCRIPT_DIR
-DEFAULT_OVERLAP_DIR = SCRIPT_DIR.parent / "groundtruth"
+def _paper_names_tuple(names: Any) -> tuple[str, ...]:
+    if not isinstance(names, list):
+        return ()
+    return tuple(str(x).strip() for x in names if str(x).strip())
 
-# Allow importing from repo root: scripts.eval.run_final_query_2602_linear_rag
-REPO_ROOT = SCRIPT_DIR.parents[2]
+
+# scripts/eval/this_file.py -> repo root
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+_DEFAULT_BENCH = REPO_ROOT / "benchmark/linear_rag_results"
+DEFAULT_RESULTS_DIR = _DEFAULT_BENCH
+DEFAULT_OUT_DIR = _DEFAULT_BENCH / "recomputed_metrics"
+DEFAULT_OVERLAP_DIR = _DEFAULT_BENCH / "groundtruth"
 
 from scripts.eval.run_final_query_2602_linear_rag import count_ground_truth_hits, ndcg_at_k
 
@@ -111,7 +117,9 @@ def main() -> None:
         with eval_path.open("r", encoding="utf-8") as f:
             payload = json.load(f)
 
-        # Mapping: original GT title -> top5_overlap_papers
+        # Rows in order (must align with eval `query_id` / same order as run_final_query input).
+        jsonl_rows: list[dict[str, Any]] = []
+        # Fallback: first original GT title -> top5 (ambiguous if two queries share the same first title).
         title_to_top5: dict[str, list[str]] = {}
         with jsonl_path.open("r", encoding="utf-8") as f:
             for line in f:
@@ -124,6 +132,13 @@ def main() -> None:
                     continue
                 title = str(paper_names[0]).strip()
                 top5 = [str(x).strip() for x in (obj.get("top5_overlap_papers") or []) if str(x).strip()]
+                jsonl_rows.append(
+                    {
+                        "paper_names": paper_names,
+                        "paper_names_key": _paper_names_tuple(paper_names),
+                        "top5_overlap_papers": top5,
+                    }
+                )
                 title_to_top5[title] = top5
 
         queries = payload.get("queries", [])
@@ -141,8 +156,26 @@ def main() -> None:
 
         for q in queries:
             old_gt = q.get("ground_truth_titles") or []
-            old_title = str(old_gt[0]).strip() if old_gt else ""
-            new_gt = title_to_top5.get(old_title, [])
+            old_key = _paper_names_tuple(old_gt)
+            new_gt: list[str] = []
+
+            # Prefer row aligned by query_id + full triple match (avoids collisions on paper_names[0]).
+            qid = q.get("query_id")
+            if (
+                isinstance(qid, int)
+                and 0 <= qid < len(jsonl_rows)
+                and old_key
+                and old_key == jsonl_rows[qid]["paper_names_key"]
+            ):
+                new_gt = list(jsonl_rows[qid]["top5_overlap_papers"])
+            elif old_key:
+                for row in jsonl_rows:
+                    if old_key == row["paper_names_key"]:
+                        new_gt = list(row["top5_overlap_papers"])
+                        break
+            if not new_gt:
+                old_title = str(old_gt[0]).strip() if old_gt else ""
+                new_gt = list(title_to_top5.get(old_title, []))
 
             q["ground_truth_titles"] = new_gt
             q["num_ground_truth"] = len(new_gt)
@@ -244,7 +277,9 @@ def main() -> None:
     overall_ndcgs = [float(q["ndcg_at_k"]) for q in combined_queries_ran]
     total_ran = len(combined_queries_ran)
     total_before = sum(v.get("total_queries_before_skip", 0) for v in split_summaries.values())
-    total_skipped = sum(v.get("skipped_queries_empty_ground_truth", 0) for v in split_summaries.values())
+    total_skipped = sum(
+        v.get("skipped_queries_empty_ground_truth", 0) for v in split_summaries.values()
+    )
 
     overall = {
         "total_queries": total_ran,
@@ -260,7 +295,10 @@ def main() -> None:
 
     summary_payload = {
         "summary": {
-            "description": "Recomputed after replacing GT with top5_overlap_papers (aligned by original GT title); empty GT skipped.",
+            "description": (
+                "Recomputed after replacing GT with top5_overlap_papers (aligned by original GT title); "
+                "empty GT skipped."
+            ),
             "k": overall_k,
             "splits": split_summaries,
             "overall": overall,

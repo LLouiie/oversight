@@ -119,8 +119,11 @@ def _paper_to_api_dict(p: Any) -> dict[str, Any]:
 @app.post("/api/search")
 @app.get("/api/search")
 def search() -> tuple[dict, int]:
-    subquery_branch_limit = 50
-    reranked_all_limit = 100
+    try:
+        subquery_branch_limit = int(os.getenv("LINEAR_RAG_AGENT_BRANCH_LIMIT", "50"))
+        subquery_branch_limit = max(1, min(100, subquery_branch_limit))
+    except (TypeError, ValueError):
+        subquery_branch_limit = 50
 
     body = request.get_json(silent=True) or {}
     # Support query params for GET as well
@@ -168,6 +171,9 @@ def search() -> tuple[dict, int]:
     except Exception:
         return {"error": "limit must be an integer between 1 and 100"}, 400
 
+    # User-facing top-k (legacy search, merge, and final slice).
+    reranked_all_limit = limit_int
+
     sources_flags: Dict[str, bool] = body.get("sources", {}) or {}
     selected_sources = _build_filters(sources_flags)
     
@@ -188,6 +194,43 @@ def search() -> tuple[dict, int]:
     agent = QueryDecompositionAgent.from_env()
     agent_run = agent.decompose(query_text, expected_subtopics=expected_subtopics)
     query_timedelta = timedelta(days=time_window_days_int)
+
+    def fallback_to_original_query(
+        *,
+        fallback_reason: str,
+        query_groups: list[dict[str, Any]] | None = None,
+    ) -> tuple[dict, int]:
+        try:
+            papers = search_engine.search_related_papers(
+                query_text=query_text,
+                query_timedelta=query_timedelta,
+                selected_sources=selected_sources,
+                limit=reranked_all_limit,
+            )
+        except Exception as exc:
+            return {
+                "error": f"LinearRAG retrieval failed: {exc}",
+                "results": [],
+                "query_groups": query_groups or [],
+                "agent": agent_run.agent_meta(include_debug=agent.debug),
+                "fallback": {
+                    "used": True,
+                    "reason": fallback_reason,
+                    "query": query_text,
+                },
+            }, 502
+
+        results = [_paper_to_api_dict(p) for p in papers]
+        return {
+            "results": results,
+            "query_groups": query_groups or [],
+            "agent": agent_run.agent_meta(include_debug=agent.debug),
+            "fallback": {
+                "used": True,
+                "reason": fallback_reason,
+                "query": query_text,
+            },
+        }, 200
 
     # If the agent is disabled/unconfigured, preserve legacy single-query search behavior.
     if not agent_run.enabled:
@@ -214,12 +257,10 @@ def search() -> tuple[dict, int]:
         }, 200
 
     if agent_run.round1_status == "failed":
-        return {
-            "error": agent_run.error or "Local agent round 1 failed",
-            "results": [],
-            "query_groups": [],
-            "agent": agent_run.agent_meta(include_debug=agent.debug),
-        }, 502
+        return fallback_to_original_query(
+            fallback_reason=agent_run.error or "Local agent round 1 failed",
+            query_groups=[],
+        )
 
     query_groups: list[dict[str, Any]] = []
     for branch in agent_run.branches:
@@ -245,13 +286,11 @@ def search() -> tuple[dict, int]:
 
         query_groups.append(group_payload)
 
-    if not any(group["status"] == "success" for group in query_groups):
-        return {
-            "error": agent_run.error or "All query branches failed",
-            "results": [],
-            "query_groups": query_groups,
-            "agent": agent_run.agent_meta(include_debug=agent.debug),
-        }, 502
+    if not any(group.get("status") == "success" and (group.get("results") or []) for group in query_groups):
+        return fallback_to_original_query(
+            fallback_reason=agent_run.error or "All query branches failed",
+            query_groups=query_groups,
+        )
 
     reranker = _get_reranker()
     max_rerank_input = (
@@ -269,6 +308,11 @@ def search() -> tuple[dict, int]:
         expected_subtopics=expected_subtopics,
     )
     results = results[:reranked_all_limit]
+    if not results:
+        return fallback_to_original_query(
+            fallback_reason="Agent branches returned no retrieval results after merge",
+            query_groups=query_groups,
+        )
 
     return {
         "results": results,

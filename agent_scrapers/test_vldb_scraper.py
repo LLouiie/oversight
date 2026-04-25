@@ -1,8 +1,10 @@
 from typing import Set
-import pytest
+import unittest
+
 from vldb_scraper import extract_papers, Paper, Author, vldb_schedule_link, unlinked_titles
 
-class TestVLDBScraper:
+
+class TestVLDBScraper(unittest.TestCase):
     """Test class for VLDB scraper functionality."""
     
     def test_extract_papers_contains_different_paper(self) -> None:
@@ -158,4 +160,4 @@ class TestVLDBScraper:
 
 
 if __name__ == "__main__":
-    pytest.main([__file__])
+    unittest.main()

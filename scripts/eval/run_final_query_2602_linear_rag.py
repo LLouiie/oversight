@@ -1,5 +1,5 @@
 """
-Batch-evaluate final_query_2602 inputs (n0 / n1 / n2) through the same LinearRAG + agent
+Batch-evaluate benchmark/ inputs (n0 / n1 / n2) through the same LinearRAG + agent
 stack as /api/search, write three result JSONs, and report recall@k.
 
 Input format (per file): JSON object whose
@@ -9,6 +9,10 @@ Input format (per file): JSON object whose
 For each query, ``len(ground_truth_titles)`` is passed to the query-decomposition agent as
 ``expected_subtopics`` so Round 1 aims for that many directions; merge/rerank uses a
 multi-branch-friendly path when that count is >= 2.
+
+Set ``LINEAR_RAG_AGENT_EXPECTED_SUBTOPICS`` (e.g. ``5``) to override that count—useful when
+re-ranking against multihop overlap labels with five target papers while the input key still
+lists three seed titles.
 
 Outputs (default): <output-dir>/n0_linear_rag_eval.json, n1_..., n2_..., plus
 `linear_rag_eval_summary.json` with pooled recall/NDCG across splits.
@@ -39,7 +43,7 @@ for _p in (REPO_ROOT, EVAL_DIR):
 
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from run_query_flat_retrieval_linear_rag import (
     _build_filters,
@@ -78,6 +82,19 @@ def parse_ground_truth_key(key: str) -> list[str]:
         return [str(x).strip() for x in obj if str(x).strip()]
     s = str(obj).strip()
     return [s] if s else []
+
+
+def resolve_agent_expected_subtopics(num_seed_papers: int) -> int:
+    """
+    Branch count for QueryDecompositionAgent. Default: one branch per seed paper in the key.
+
+    Override with env ``LINEAR_RAG_AGENT_EXPECTED_SUBTOPICS`` (integer 1–16), e.g. 5 when
+    evaluating retrieval against five multihop overlap targets while the key still has three titles.
+    """
+    raw = os.getenv("LINEAR_RAG_AGENT_EXPECTED_SUBTOPICS", "").strip()
+    if raw.isdigit():
+        return max(1, min(16, int(raw)))
+    return max(1, int(num_seed_papers))
 
 
 def count_ground_truth_hits(
@@ -213,12 +230,14 @@ def run_one_input_file(
     ndcgs: list[float] = []
     any_hit_count = 0
     full_recall_count = 0
+    agent_subtopics_resolved = 3
 
     for query_id, (raw_key, query_text) in enumerate(data.items()):
         if not query_text or not str(query_text).strip():
             continue
         gt_titles = parse_ground_truth_key(raw_key)
         q = str(query_text).strip()
+        agent_subtopics_resolved = resolve_agent_expected_subtopics(len(gt_titles))
 
         paper_dicts = _search_like_api(
             q,
@@ -227,7 +246,7 @@ def run_one_input_file(
             selected_sources=selected_sources,
             rerank_requested=rerank,
             rerank_max_input=rerank_max_input,
-            expected_subtopics=len(gt_titles),
+            expected_subtopics=agent_subtopics_resolved,
         )
         names = [str(p.get("title", "")) for p in paper_dicts]
         ids = [str(p.get("paper_id", "")) for p in paper_dicts]
@@ -309,19 +328,23 @@ def run_one_input_file(
             "time_window_days": time_window_days,
             "selected_sources": selected_sources,
             "rerank": rerank,
-            "agent_expected_subtopics": "len(ground_truth_titles) per query passed to QueryDecompositionAgent.decompose",
+            "agent_expected_subtopics": (
+                "LINEAR_RAG_AGENT_EXPECTED_SUBTOPICS if set, else len(ground_truth_titles); "
+                "passed to QueryDecompositionAgent.decompose"
+            ),
+            "linear_rag_agent_expected_subtopics_resolved": agent_subtopics_resolved,
         },
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run LinearRAG (+agent) on final_query_2602 n0/n1/n2 files and compute recall@k."
+        description="Run LinearRAG (+agent) on benchmark/ n0/n1/n2 files and compute recall@k."
     )
     parser.add_argument(
         "--data-dir",
         type=Path,
-        default=REPO_ROOT / "final_query_2602",
+        default=REPO_ROOT / "benchmark",
         help="Directory containing sampled_multi_paper_entities_n{0,1,2}_output.json",
     )
     parser.add_argument(

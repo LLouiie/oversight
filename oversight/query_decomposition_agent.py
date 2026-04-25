@@ -232,20 +232,54 @@ class QueryDecompositionAgent:
         enabled: bool | None = None,
         debug: bool | None = None,
     ):
-        self.mode = _string_env("QUERY_DECOMPOSITION_AGENT_MODE", "local").lower()
-        if self.mode not in {"local", "remote"}:
-            self.mode = "local"
+        raw_mode = _string_env("QUERY_DECOMPOSITION_AGENT_MODE", "openai").lower()
+        if raw_mode not in {"openai", "local", "remote"}:
+            raw_mode = "openai"
+        self.mode = raw_mode
 
-        if self.mode == "remote":
+        if self.mode == "openai":
+            # Chat Completions API (OpenAI or compatible); defaults to OpenAI cloud + gpt-4o.
+            self.base_url = (
+                base_url
+                or _string_env("OPENAI_BASE_URL")
+                or _string_env("REMOTE_AGENT_LLM_BASE_URL")
+                or "https://api.openai.com/v1"
+            ).strip()
+            self.model = (
+                model
+                or _string_env("OPENAI_MODEL")
+                or _string_env("REMOTE_AGENT_LLM_MODEL")
+                or _string_env("LOCAL_AGENT_LLM_MODEL")
+                or "gpt-4o"
+            ).strip()
+            self.api_key = api_key if api_key is not None else (
+                _string_env("OPENAI_API_KEY")
+                or _string_env("API_KEY")
+                or _string_env("REMOTE_AGENT_LLM_API_KEY")
+            )
+            timeout_raw = (
+                str(timeout_seconds)
+                if timeout_seconds is not None
+                else (
+                    _string_env("OPENAI_TIMEOUT_SECONDS")
+                    or _string_env("REMOTE_AGENT_LLM_TIMEOUT_SECONDS")
+                    or _string_env("LOCAL_AGENT_LLM_TIMEOUT_SECONDS")
+                    or "20"
+                )
+            )
+        elif self.mode == "remote":
             self.base_url = (base_url or _string_env("API_URL") or _string_env("REMOTE_AGENT_LLM_BASE_URL")).strip()
             self.model = (model or _string_env("REMOTE_AGENT_LLM_MODEL") or _string_env("LOCAL_AGENT_LLM_MODEL")).strip()
-            self.api_key = api_key if api_key is not None else (_string_env("API_KEY") or _string_env("REMOTE_AGENT_LLM_API_KEY"))
+            self.api_key = api_key if api_key is not None else (
+                _string_env("API_KEY") or _string_env("REMOTE_AGENT_LLM_API_KEY")
+            )
             timeout_raw = (
                 str(timeout_seconds)
                 if timeout_seconds is not None
                 else (_string_env("REMOTE_AGENT_LLM_TIMEOUT_SECONDS") or _string_env("LOCAL_AGENT_LLM_TIMEOUT_SECONDS") or "20")
             )
         else:
+            # local: self-hosted OpenAI-compatible server (e.g. vLLM)
             self.base_url = (base_url or _string_env("LOCAL_AGENT_LLM_BASE_URL")).strip()
             self.model = (model or _string_env("LOCAL_AGENT_LLM_MODEL")).strip()
             self.api_key = api_key if api_key is not None else _string_env("LOCAL_AGENT_LLM_API_KEY")
@@ -284,7 +318,7 @@ class QueryDecompositionAgent:
                 model=self.model,
                 base_url=self.base_url or None,
                 branches=[],
-                error="Local agent disabled via LOCAL_AGENT_ENABLED",
+                error="Query decomposition disabled via LOCAL_AGENT_ENABLED",
             )
 
         if not self.base_url or not self.model:
@@ -561,9 +595,10 @@ class QueryDecompositionAgent:
             if n >= 1:
                 cap = min(n, self.max_directions)
                 extra = (
-                    f"\n\nThe question bundles about {cap} distinct technical subtopics. "
-                    f"Produce exactly {cap} entries in `directions`—one focused retrieval angle per subtopic, "
-                    "with minimal overlap between directions.\n"
+                    f"\n\nThe question combines about {cap} separable technical threads (distinct mechanisms, "
+                    f"artifacts, or settings). Produce exactly {cap} entries in `directions`—one thread per entry—"
+                    "so named items and contrasts in the user text are distributed rather than repeated. "
+                    "Keep overlap between directions low.\n"
                 )
         tail = (
             f"{self.max_directions}; use fewer when the query is narrow)."

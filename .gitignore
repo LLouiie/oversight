@@ -28,3 +28,6 @@ logs/
 # Local Tooling
 .shared/
 .trae/
+
+# Regenerated from scripts/eval/multi_hop_recompute.py (keeps repo free of eval JSON)
+benchmark/linear_rag_results/recomputed_metrics/
