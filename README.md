@@ -15,7 +15,9 @@ Multihop Oversight extends the original [Oversight](https://github.com/ottowhite
 
 ---
 
-## Demo
+## Video comparison
+
+The screen recording **compares the upstream [Oversight](https://github.com/ottowhite/oversight) interface with Multihop Oversight** (this repo) on the same or similar multihop-style queries, so you can see how subquery decomposition, LinearRAG retrieval, and reranking change the result quality and flow.
 
 <video width="100%" controls playsinline>
   <source src="https://github.com/user-attachments/assets/ace0f3f5-d9fd-429a-b3f8-768a4b121b81" type="video/quicktime" />
