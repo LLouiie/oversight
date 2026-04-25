@@ -2,6 +2,18 @@ from datetime import datetime, timedelta
 import os
 from typing import Any, Dict, List
 
+# These must be set before numpy / torch / HuggingFace are imported.
+# On macOS, multiple OpenMP / BLAS runtimes get loaded by PyTorch, sentence-transformers,
+# and FlagEmbedding simultaneously.  Forking or even just initialising them concurrently
+# can produce a segmentation fault during the first SentenceTransformer.encode() call.
+# Forcing every threading layer to 1 thread is the reliable workaround.
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+
 from flask import Flask, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -329,7 +341,7 @@ if __name__ == "__main__":
         _get_reranker()
         
     # Bind to all interfaces for local dev; port can be overridden via FLASK_PORT
-    port = int(os.getenv("FLASK_PORT", "5002"))
+    port = int(os.getenv("FLASK_PORT", "5001"))
     # Use project-specific flags so inherited Flask env vars do not accidentally
     # enable auto-reload during long-running LinearRAG indexing.
     debug_enabled = os.getenv("OVERSIGHT_FLASK_DEBUG", "false").lower() == "true"
