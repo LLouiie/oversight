@@ -46,7 +46,7 @@ When `flask_app.py` receives the first search, `LinearRAGSearchEngine` runs `Lin
    - `entity_embedding.parquet`
 3. **Graph construction** — an `igraph` undirected graph is built from entity→passage and entity→sentence co-occurrence edges, plus adjacent-passage edges. The graph is optionally exported to `LinearRAG.graphml` for inspection.
 
-The three Parquet files and `ner_results.json` are committed to the repository so the system starts immediately without re-indexing.
+These files live under `LinearRAG/import/oversight_data/`, are **ignored by git** (see `.gitignore`), and are produced on the **first** search request (or when you rebuild the index below). Fresh clones index automatically on first use.
 
 ### Re-generating from scratch
 

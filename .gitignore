@@ -31,3 +31,8 @@ logs/
 
 # Regenerated from scripts/eval/multi_hop_recompute.py (keeps repo free of eval JSON)
 benchmark/linear_rag_results/recomputed_metrics/
+
+# LinearRAG index artifacts (regenerated on first search or manual rebuild; keeps working tree clean)
+LinearRAG/import/oversight_data/*.parquet
+LinearRAG/import/oversight_data/LinearRAG.graphml
+LinearRAG/import/oversight_data/ner_results.json
